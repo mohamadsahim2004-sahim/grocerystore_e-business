@@ -1,4 +1,5 @@
 import React from 'react';
+import { BrandLogo } from './Logos';
 
 export default function Navbar({
   currentPage,
@@ -11,109 +12,82 @@ export default function Navbar({
   setIsWishlistOpen,
   setIsProfileOpen,
   setIsSettingsOpen,
-  setSelectedCategory,
-  user
+  setSelectedCategory
 }) {
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    if (currentPage !== 'listing') {
-      setCurrentPage('listing');
-    }
-  };
-
-  const navigateToPage = (pageName) => {
-    setCurrentPage(pageName);
-    if (pageName === 'listing') {
-      setSelectedCategory('ALL');
-    }
-  };
-
   return (
-    <header className="header">
-      <div className="logo-container" onClick={() => navigateToPage('home')}>
-        <svg className="logo-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M 26 42 C 34 16, 96 14, 96 36 C 72 32, 42 46, 26 42 Z" fill="#ffffff" />
-          <path d="M 24 58 C 44 32, 98 32, 82 62 C 54 56, 30 74, 24 58 Z" fill="#4ade80" />
-          <path d="M 32 60 Q 56 56 78 61" stroke="#15803d" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 46 58 Q 50 53 58 52" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M 58 59 Q 64 55 70 54" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M 82 48 L 102 48 C 96 54, 88 56, 82 56 Z" fill="#ffffff" />
-          <path d="M 26 76 C 40 68, 88 64, 96 78 C 66 88, 38 90, 26 76 Z" fill="#ffffff" />
-        </svg>
-
-        <div className="logo-text">
-          <span className="logo-title">EXOTIC</span>
-          <span className="logo-subtitle">Authentic & Global Flavors</span>
-          <span className="logo-tagline">🛒 Food Markt</span>
+    <nav className="navbar">
+      <div className="navbar-container">
+        {/* Updated Brand Logo */}
+        <div
+          className="navbar-brand"
+          onClick={() => {
+            setSelectedCategory('ALL');
+            setCurrentPage('home');
+          }}
+        >
+          <BrandLogo />
         </div>
-      </div>
 
-      <ul className="nav-links">
-        <li>
-          <button className={currentPage === 'home' ? 'active' : ''} onClick={() => navigateToPage('home')}>
+        <div className="nav-links">
+          <button
+            className={`nav-btn ${currentPage === 'home' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedCategory('ALL');
+              setCurrentPage('home');
+            }}
+          >
             HOME
           </button>
-        </li>
-        <li>
-          <button className={currentPage === 'listing' ? 'active' : ''} onClick={() => navigateToPage('listing')}>
+          <button
+            className={`nav-btn ${currentPage === 'listing' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedCategory('ALL');
+              setCurrentPage('listing');
+            }}
+          >
             PRODUCTS
           </button>
-        </li>
-        <li>
-          <button onClick={() => navigateToPage('listing')}>SPECIALS</button>
-        </li>
-      </ul>
+          <button
+            className={`nav-btn ${currentPage === 'about' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('about')}
+          >
+            ABOUT
+          </button>
+          <button
+            className={`nav-btn ${currentPage === 'contact' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('contact')}
+          >
+            CONTACT
+          </button>
+        </div>
 
-      <div className="search-container">
-        <span className="search-icon">🔍</span>
-        <input
-          className="search-input"
-          type="text"
-          placeholder="Search for exotic groceries..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Search exotic foods..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => {
+              if (currentPage !== 'listing') setCurrentPage('listing');
+            }}
+          />
+        </div>
+
+        <div className="nav-actions">
+          <button className="icon-btn" onClick={() => setIsWishlistOpen(true)} title="Wishlist">
+            ❤️ {wishlistCount > 0 && <span className="badge">{wishlistCount}</span>}
+          </button>
+          <button className="icon-btn" onClick={() => setIsCartOpen(true)} title="Cart">
+            🛒 {cartCount > 0 && <span className="badge">{cartCount}</span>}
+          </button>
+          <button className="icon-btn" onClick={() => setIsProfileOpen(true)} title="Profile">
+            👤
+          </button>
+          <button className="icon-btn" onClick={() => setIsSettingsOpen(true)} title="Settings">
+            ⚙️
+          </button>
+        </div>
       </div>
-
-      <div className="nav-actions">
-        {/* Settings Icon */}
-        <button className="action-btn" title="Settings" onClick={() => setIsSettingsOpen(true)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </button>
-
-        {/* Profile Icon */}
-        <button className="action-btn user-nav-btn" title="Account" onClick={() => setIsProfileOpen(true)}>
-          {user ? (
-            <span className="user-logged-badge">
-              {user.name ? user.name.charAt(0).toUpperCase() : '👤'}
-            </span>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          )}
-        </button>
-
-        <button className="action-btn" title="Wishlist" onClick={() => setIsWishlistOpen(true)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-          {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
-        </button>
-
-        <button className="action-btn" title="Cart" onClick={() => setIsCartOpen(true)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="9" cy="21" r="1" />
-            <circle cx="20" cy="21" r="1" />
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-          </svg>
-          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-        </button>
-      </div>
-    </header>
+    </nav>
   );
 }

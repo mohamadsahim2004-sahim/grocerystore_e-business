@@ -878,3 +878,193 @@ body {
 .light-theme .profile-details-box {
   background-color: #f8fafc;
 }
+/* ==========================================
+   NAVBAR STYLES
+   ========================================== */
+.navbar {
+  width: 100%;
+  background-color: #0c1427;
+  border-bottom: 1px solid #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 12px 24px;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.navbar-brand {
+  font-size: 20px;
+  font-weight: 800;
+  color: #22c55e;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 8px 4px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.nav-btn:hover {
+  color: #ffffff;
+}
+
+.nav-btn.active {
+  color: #22c55e;
+}
+
+.nav-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #22c55e;
+  border-radius: 2px;
+}
+
+.search-box {
+  flex: 1;
+  max-width: 320px;
+}
+
+.search-box input {
+  width: 100%;
+  height: 38px;
+  background-color: #060a14;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: #22c55e;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  position: relative;
+}
+
+.icon-btn:hover {
+  background-color: #334155;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: bold;
+  border-radius: 999px;
+  padding: 2px 6px;
+}
+
+/* Light Theme Overrides */
+.light-theme .navbar {
+  background-color: #ffffff;
+  border-bottom-color: #e2e8f0;
+}
+
+.light-theme .nav-btn {
+  color: #64748b;
+}
+
+.light-theme .nav-btn:hover {
+  color: #0f172a;
+}
+
+.light-theme .search-box input {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.light-theme .icon-btn {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+/* Footer Social Icons */
+.footer-socials {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.footer-socials a {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.footer-socials a:hover {
+  color: #22c55e;
+  background-color: #334155;
+  transform: translateY(-2px);
+}
+
+/* Footer Bottom Layout */
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid #1e293b;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.payment-logos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
