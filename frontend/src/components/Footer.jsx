@@ -1,51 +1,26 @@
-import React from 'react';
-import { 
-  BrandLogo, 
-  VisaLogo, 
-  MastercardLogo, 
-  PaypalLogo, 
-  ApplePayLogo,
-  InstagramLogo,
-  FacebookLogo,
-  TwitterLogo
-} from './Logos';
+import React, { useContext } from 'react';
+import { StoreContext } from '../context/StoreContext';
 
-export default function Footer({ onNavigate }) {
+export default function Footer() {
+  const { setInfoModal } = useContext(StoreContext);
+
   return (
-    <footer className="footer">
-      <div className="footer-container">
-        {/* Brand Section with Vertical Logo */}
-        <div className="footer-info">
-          <BrandLogo layout="vertical" />
-          
-          <div className="footer-socials">
-            <a href="#instagram" aria-label="Instagram"><InstagramLogo /></a>
-            <a href="#facebook" aria-label="Facebook"><FacebookLogo /></a>
-            <a href="#twitter" aria-label="Twitter"><TwitterLogo /></a>
-          </div>
-        </div>
-
-        {/* 2-Line Full-Width Link Container */}
-        <div className="footer-nav-full">
-          <div className="footer-nav-row">
-            <button onClick={() => onNavigate('faq')}>FAQ</button>
-            <button onClick={() => onNavigate('shipping')}>Shipping Info</button>
-          </div>
-          <div className="footer-nav-row">
-            <button onClick={() => onNavigate('privacy')}>Privacy Policy</button>
-            <button onClick={() => onNavigate('impressum')}>Impressum</button>
-          </div>
-        </div>
+    <footer className="site-footer" style={{ padding: '24px 0', borderTop: '1px solid var(--border-glass)', marginTop: '40px', background: 'var(--bg-surface)' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap', fontSize: '12px', fontWeight: 'bold' }}>
+        <button onClick={() => setInfoModal('faq')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>FAQ</button>
+        <span style={{ color: 'var(--text-muted)' }}>•</span>
+        <button onClick={() => setInfoModal('shipping')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>SHIPPING INFO (GERMANY)</button>
+        <span style={{ color: 'var(--text-muted)' }}>•</span>
+        <button onClick={() => setInfoModal('impressum')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>IMPRESSUM</button>
+        <span style={{ color: 'var(--text-muted)' }}>•</span>
+        <button onClick={() => setInfoModal('privacy')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>PRIVACY POLICY</button>
+        <span style={{ color: 'var(--text-muted)' }}>•</span>
+        <button onClick={() => setInfoModal('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>CONTACT</button>
+        <span style={{ color: 'var(--text-muted)' }}>•</span>
+        <button onClick={() => setInfoModal('about')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>ABOUT</button>
       </div>
-
-      <div className="footer-bottom">
-        <p>© 2026 Exotic Food Markt. All rights reserved.</p>
-        <div className="payment-logos">
-          <VisaLogo />
-          <MastercardLogo />
-          <PaypalLogo />
-          <ApplePayLogo />
-        </div>
+      <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: 'var(--text-muted)' }}>
+        © {new Date().getFullYear()} Exotic Grocery Store GmbH. All rights reserved.
       </div>
     </footer>
   );

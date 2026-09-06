@@ -1,153 +1,76 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { StoreContext } from '../context/StoreContext';
 
-export default function SettingsModal({ isOpen, onClose, settings, setSettings }) {
-  if (!isOpen) return null;
+export default function SettingsModal() {
+  const { isSettingsOpen, setIsSettingsOpen, settings, setSettings } = useContext(StoreContext);
 
-  // Safe defaults to prevent crash if localStorage state is incomplete
-  const safeSettings = {
-    theme: 'dark',
-    language: 'EN',
-    region: 'Germany',
-    currency: 'EUR',
-    paymentDetails: { cardNumber: '', cardHolder: '', expiry: '', cvv: '' },
-    ...settings
-  };
+  if (!isSettingsOpen) return null;
 
-  const paymentDetails = safeSettings.paymentDetails || { cardNumber: '', cardHolder: '', expiry: '', cvv: '' };
-
-  const handleChange = (field, value) => {
-    const updated = { ...safeSettings, [field]: value };
-    setSettings(updated);
-    localStorage.setItem('exotic_settings', JSON.stringify(updated));
-  };
-
-  const handlePaymentChange = (field, value) => {
-    const updatedPayment = { ...paymentDetails, [field]: value };
-    const updated = { ...safeSettings, paymentDetails: updatedPayment };
-    setSettings(updated);
-    localStorage.setItem('exotic_settings', JSON.stringify(updated));
+  const handleCurrencyChange = (e) => {
+    const val = e.target.value;
+    const symbolMap = { EUR: '€', USD: '$', GBP: '£' };
+    setSettings((prev) => ({ ...prev, currency: val, symbol: symbolMap[val] }));
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content profile-modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="drawer-header">
-          <h3>⚙️ Preferences & Settings</h3>
-          <button className="close-btn" onClick={onClose}>✕</button>
+    <div className="modal-overlay" onClick={() => setIsSettingsOpen(false)}>
+      <div className="modal-card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-glass)' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '800', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+            ⚙️ Store Settings
+          </h2>
+          <button style={{ fontSize: '18px', fontWeight: 'bold', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => setIsSettingsOpen(false)}>
+            ✕
+          </button>
         </div>
 
-        <div className="profile-body">
-          <div className="auth-form">
-            <div className="form-group">
-              <label>App Theme</label>
-              <select
-                className="search-input custom-input"
-                value={safeSettings.theme}
-                onChange={(e) => handleChange('theme', e.target.value)}
-              >
-                <option value="dark">🌙 Dark Mode</option>
-                <option value="light">☀️ Light Mode</option>
-              </select>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Currency
+            </label>
+            <select className="form-control" value={settings.currency} onChange={handleCurrencyChange}>
+              <option value="EUR">EUR (€) - Euro</option>
+              <option value="USD">USD ($) - US Dollar</option>
+              <option value="GBP">GBP (£) - British Pound</option>
+            </select>
+          </div>
 
-            <div className="form-group">
-              <label>Display Language</label>
-              <select
-                className="search-input custom-input"
-                value={safeSettings.language}
-                onChange={(e) => handleChange('language', e.target.value)}
-              >
-                <option value="EN">English (US/UK)</option>
-                <option value="DE">Deutsch (Germany)</option>
-                <option value="FR">Français (France)</option>
-                <option value="ES">Español (Spain)</option>
-              </select>
-            </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Language
+            </label>
+            <select className="form-control" value={settings.language} onChange={(e) => setSettings({ ...settings, language: e.target.value })}>
+              <option value="English">English</option>
+              <option value="German">Deutsch (German)</option>
+              <option value="French">Français (French)</option>
+            </select>
+          </div>
 
-            <div className="form-group">
-              <label>Region / Country</label>
-              <select
-                className="search-input custom-input"
-                value={safeSettings.region}
-                onChange={(e) => handleChange('region', e.target.value)}
-              >
-                <option value="Germany">Germany (DE)</option>
-                <option value="Austria">Austria (AT)</option>
-                <option value="Switzerland">Switzerland (CH)</option>
-                <option value="France">France (FR)</option>
-                <option value="Other EU">Other EU Country</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Currency</label>
-              <select
-                className="search-input custom-input"
-                value={safeSettings.currency}
-                onChange={(e) => handleChange('currency', e.target.value)}
-              >
-                <option value="EUR">EUR (€)</option>
-                <option value="USD">USD ($)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="CHF">CHF (Fr)</option>
-              </select>
-            </div>
-
-            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-dark)' }}>
-              <h4 style={{ color: 'var(--leaf-green-glow)', marginBottom: '10px', fontSize: '13px' }}>
-                💳 Saved Payment Details
-              </h4>
-
-              <div className="form-group">
-                <label>Cardholder Name</label>
-                <input
-                  type="text"
-                  className="search-input custom-input"
-                  placeholder="John Doe"
-                  value={paymentDetails.cardHolder || ''}
-                  onChange={(e) => handlePaymentChange('cardHolder', e.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Card Number</label>
-                <input
-                  type="text"
-                  className="search-input custom-input"
-                  placeholder="•••• •••• •••• 1234"
-                  value={paymentDetails.cardNumber || ''}
-                  onChange={(e) => handlePaymentChange('cardNumber', e.target.value)}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Expiry Date</label>
-                  <input
-                    type="text"
-                    className="search-input custom-input"
-                    placeholder="MM/YY"
-                    value={paymentDetails.expiry || ''}
-                    onChange={(e) => handlePaymentChange('expiry', e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>CVV</label>
-                  <input
-                    type="password"
-                    className="search-input custom-input"
-                    placeholder="123"
-                    value={paymentDetails.cvv || ''}
-                    onChange={(e) => handlePaymentChange('cvv', e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button type="button" className="checkout-btn" style={{ marginTop: '12px' }} onClick={onClose}>
-              Save & Apply Settings
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Theme Mode</span>
+            <button
+              className="add-to-cart-btn"
+              style={{ width: 'auto', padding: '6px 12px', fontSize: '12px' }}
+              onClick={() => setSettings({ ...settings, theme: settings.theme === 'light' ? 'dark' : 'light' })}
+            >
+              {settings.theme === 'light' ? '☀️ Light' : '🌙 Dark'} Mode
             </button>
           </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Order &amp; Offer Notifications</span>
+            <input
+              type="checkbox"
+              checked={settings.notifications}
+              onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+          </div>
+
+          <button className="add-to-cart-btn" style={{ marginTop: '12px' }} onClick={() => setIsSettingsOpen(false)}>
+            Save &amp; Apply
+          </button>
         </div>
       </div>
     </div>

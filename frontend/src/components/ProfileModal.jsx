@@ -1,423 +1,91 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
+import { StoreContext } from '../context/StoreContext';
 
-export default function ProfileModal({ isOpen, onClose, user, setUser }) {
-  // Mode can be: 'login', 'register', 'view', 'edit'
-  const [mode, setMode] = useState('login');
+export default function ProfileModal() {
+  const { isProfileOpen, setIsProfileOpen, user, setUser, formatPrice } = useContext(StoreContext);
+  const [activeTab, setActiveTab] = useState('details');
+  const [formData, setFormData] = useState(user);
 
-  // Form states for login
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  if (!isProfileOpen) return null;
 
-  // Form states for registration / editing profile
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    address: '',
-    city: '',
-    postalCode: '',
-    avatarUrl: ''
-  });
-
-  const [message, setMessage] = useState('');
-
-  // When modal opens or user changes, set appropriate mode
-  useEffect(() => {
-    if (user) {
-      setMode('view');
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        password: user.password || '',
-        phone: user.phone || '',
-        address: user.address || '',
-        city: user.city || '',
-        postalCode: user.postalCode || '',
-        avatarUrl: user.avatarUrl || ''
-      });
-    } else {
-      setMode('login');
-    }
-    setMessage('');
-  }, [user, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Handle Login
-  const handleLogin = (e) => {
+  const handleSave = (e) => {
     e.preventDefault();
-    const storedUsers = JSON.parse(localStorage.getItem('exotic_users') || '[]');
-    const foundUser = storedUsers.find(
-      (u) => u.email.toLowerCase() === loginEmail.toLowerCase() && u.password === loginPassword
-    );
-
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('exotic_current_user', JSON.stringify(foundUser));
-      setMessage('Successfully logged in!');
-      setMode('view');
-    } else {
-      setMessage('Invalid email or password. Please try again.');
-    }
-  };
-
-  // Handle Register
-  const handleRegister = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email || !formData.password) {
-      setMessage('Please fill in Name, Email, and Password.');
-      return;
-    }
-
-    const storedUsers = JSON.parse(localStorage.getItem('exotic_users') || '[]');
-    const existing = storedUsers.find((u) => u.email.toLowerCase() === formData.email.toLowerCase());
-
-    if (existing) {
-      setMessage('An account with this email already exists.');
-      return;
-    }
-
-    const newUser = { ...formData, id: Date.now() };
-    storedUsers.push(newUser);
-    localStorage.setItem('exotic_users', JSON.stringify(storedUsers));
-    localStorage.setItem('exotic_current_user', JSON.stringify(newUser));
-
-    setUser(newUser);
-    setMessage('Account created successfully!');
-    setMode('view');
-  };
-
-  // Handle Edit & Save Profile
-  const handleSaveProfile = (e) => {
-    e.preventDefault();
-    const updatedUser = { ...user, ...formData };
-
-    // Update in stored users list
-    const storedUsers = JSON.parse(localStorage.getItem('exotic_users') || '[]');
-    const newStoredUsers = storedUsers.map((u) => (u.id === user.id ? updatedUser : u));
-
-    localStorage.setItem('exotic_users', JSON.stringify(newStoredUsers));
-    localStorage.setItem('exotic_current_user', JSON.stringify(updatedUser));
-
-    setUser(updatedUser);
-    setMessage('Profile updated successfully!');
-    setMode('view');
-  };
-
-  // Handle Logout
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('exotic_current_user');
-    setLoginEmail('');
-    setLoginPassword('');
-    setMode('login');
-    setMessage('Logged out successfully.');
+    setUser(formData);
+    alert('Profile details updated successfully!');
+    setIsProfileOpen(false);
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content profile-modal-box" onClick={(e) => e.stopPropagation()}>
-        <div className="drawer-header">
-          <h3>
-            {mode === 'login' && 'Log In to Your Account'}
-            {mode === 'register' && 'Create New Account'}
-            {mode === 'view' && 'My Profile'}
-            {mode === 'edit' && 'Edit Profile Data'}
-          </h3>
-          <button className="close-btn" onClick={onClose}>✕</button>
+    <div className="modal-overlay" onClick={() => setIsProfileOpen(false)}>
+      <div className="modal-card" style={{ maxWidth: '520px', background: 'var(--bg-surface)', border: '1px solid var(--border-glass)' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '800', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+            👤 Customer Account
+          </h2>
+          <button style={{ fontSize: '18px', fontWeight: 'bold', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} onClick={() => setIsProfileOpen(false)}>
+            ✕
+          </button>
         </div>
 
-        <div className="profile-body">
-          {message && <div className="auth-alert">{message}</div>}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', borderBottom: '1px solid var(--border-glass)' }}>
+          <button
+            style={{ fontWeight: activeTab === 'details' ? 'bold' : 'normal', borderBottom: activeTab === 'details' ? '2px solid var(--neon-green-bright)' : 'none', paddingBottom: '6px', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', color: activeTab === 'details' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer' }}
+            onClick={() => setActiveTab('details')}
+          >
+            Personal Details
+          </button>
+          <button
+            style={{ fontWeight: activeTab === 'orders' ? 'bold' : 'normal', borderBottom: activeTab === 'orders' ? '2px solid var(--neon-green-bright)' : 'none', paddingBottom: '6px', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', color: activeTab === 'orders' ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer' }}
+            onClick={() => setActiveTab('orders')}
+          >
+            Order History
+          </button>
+        </div>
 
-          {/* MODE: LOGIN */}
-          {mode === 'login' && (
-            <form onSubmit={handleLogin} className="auth-form">
+        {activeTab === 'details' ? (
+          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="form-group">
+              <label style={{ color: 'var(--text-primary)' }}>Full Name</label>
+              <input className="form-control" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+            </div>
+            <div className="form-group">
+              <label style={{ color: 'var(--text-primary)' }}>Email Address</label>
+              <input className="form-control" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+            </div>
+            <div className="form-group">
+              <label style={{ color: 'var(--text-primary)' }}>Street Address</label>
+              <input className="form-control" value={formData.street} onChange={(e) => setFormData({ ...formData, street: e.target.value })} required />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div className="form-group">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  required
-                  className="search-input custom-input"
-                  placeholder="your@email.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                />
+                <label style={{ color: 'var(--text-primary)' }}>City</label>
+                <input className="form-control" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} required />
               </div>
-
               <div className="form-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  required
-                  className="search-input custom-input"
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                />
-              </div>
-
-              <button type="submit" className="checkout-btn">Log In</button>
-
-              <div className="auth-switch-text">
-                Don't have an account?{' '}
-                <button type="button" className="link-btn" onClick={() => { setMode('register'); setMessage(''); }}>
-                  Register here
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* MODE: REGISTER */}
-          {mode === 'register' && (
-            <form onSubmit={handleRegister} className="auth-form">
-              <div className="form-group">
-                <label>Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className="search-input custom-input"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Email Address *</label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  className="search-input custom-input"
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Password *</label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  className="search-input custom-input"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Phone Number</label>
-                <input
-                  type="text"
-                  name="phone"
-                  className="search-input custom-input"
-                  placeholder="+49 170 1234567"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Shipping Street Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  className="search-input custom-input"
-                  placeholder="Hauptstraße 12"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    className="search-input custom-input"
-                    placeholder="Berlin"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Postal Code</label>
-                  <input
-                    type="text"
-                    name="postalCode"
-                    className="search-input custom-input"
-                    placeholder="10115"
-                    value={formData.postalCode}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              <button type="submit" className="checkout-btn">Create Account</button>
-
-              <div className="auth-switch-text">
-                Already have an account?{' '}
-                <button type="button" className="link-btn" onClick={() => { setMode('login'); setMessage(''); }}>
-                  Log In
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* MODE: VIEW PROFILE */}
-          {mode === 'view' && user && (
-            <div className="profile-view">
-              <div className="avatar-circle">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="user-avatar-img" />
-                ) : (
-                  <span>{user.name ? user.name.charAt(0).toUpperCase() : '👤'}</span>
-                )}
-              </div>
-
-              <h4>{user.name}</h4>
-              <p className="profile-email">{user.email}</p>
-
-              <div className="profile-details-box">
-                <div className="detail-row">
-                  <span>Phone:</span> <strong>{user.phone || 'Not set'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span>Address:</span> <strong>{user.address || 'Not set'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span>City / Postal:</span> <strong>{user.city ? `${user.city} (${user.postalCode || ''})` : 'Not set'}</strong>
-                </div>
-              </div>
-
-              <div className="profile-action-buttons">
-                <button className="add-btn" style={{ padding: '10px' }} onClick={() => setMode('edit')}>
-                  ✏️ Edit Profile Data
-                </button>
-                <button className="remove-btn-outline" onClick={handleLogout}>
-                  🚪 Log Out
-                </button>
+                <label style={{ color: 'var(--text-primary)' }}>Postal Code</label>
+                <input className="form-control" value={formData.zip} onChange={(e) => setFormData({ ...formData, zip: e.target.value })} required />
               </div>
             </div>
-          )}
-
-          {/* MODE: EDIT PROFILE */}
-          {mode === 'edit' && user && (
-            <form onSubmit={handleSaveProfile} className="auth-form">
-              <div className="form-group">
-                <label>Profile Image URL</label>
-                <input
-                  type="text"
-                  name="avatarUrl"
-                  className="search-input custom-input"
-                  placeholder="https://example.com/photo.jpg"
-                  value={formData.avatarUrl}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  className="search-input custom-input"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  className="search-input custom-input"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  className="search-input custom-input"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Phone Number</label>
-                <input
-                  type="text"
-                  name="phone"
-                  className="search-input custom-input"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Street Address</label>
-                <input
-                  type="text"
-                  name="address"
-                  className="search-input custom-input"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    className="search-input custom-input"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                  />
+            <button type="submit" className="add-to-cart-btn" style={{ marginTop: '10px' }}>
+              Save Profile
+            </button>
+          </form>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {user.orderHistory.map((ord) => (
+              <div key={ord.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-primary)' }}>{ord.id}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ord.date}</div>
                 </div>
-                <div className="form-group">
-                  <label>Postal Code</label>
-                  <input
-                    type="text"
-                    name="postalCode"
-                    className="search-input custom-input"
-                    value={formData.postalCode}
-                    onChange={handleInputChange}
-                  />
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-primary)' }}>{formatPrice(ord.total)}</div>
+                  <span style={{ fontSize: '11px', color: 'var(--neon-green-bright)', fontWeight: 'bold' }}>{ord.status}</span>
                 </div>
               </div>
-
-              <div className="profile-action-buttons">
-                <button type="submit" className="checkout-btn">Save Changes</button>
-                <button type="button" className="remove-btn-outline" onClick={() => setMode('view')}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

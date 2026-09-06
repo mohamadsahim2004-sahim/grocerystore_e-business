@@ -1,0 +1,393 @@
+export const initialProducts = [
+  // --- FRUITS ---
+  // Sample product data structure with explicit original price and discount percentage
+  {
+    id: 'p1',
+    name: 'Organic Pink Dragon Fruit (Red Pitaya)',
+    category: 'Fruits',
+    price: 4.99,         // <--- Discount / Current Price
+    oldPrice: 6.99,      // <--- Original Old Price
+    unit: '1 pc (~400g)',
+    isSpecial: true,
+    rating: 4.9,
+    origin: 'Vietnam',
+    image: 'https://images.unsplash.com/photo-1527325678964-54921661f888?w=800&auto=format&fit=crop&q=80',
+    description: 'Vibrant magenta flesh packed with antioxidants.'
+  },
+  {
+    id: 'p2',
+    name: 'Fresh Purple Mangosteen',
+    category: 'Fruits',
+    price: 9.99,
+    oldPrice: 12.50,
+    offerPercent: 20,
+    unit: '500g',
+    isSpecial: true,
+    rating: 4.8,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1596591606975-97ee5cef3a1e?w=800&auto=format&fit=crop&q=80',
+    description: 'Known as the "Queen of Fruits". Offers soft, white juicy segments with a perfect delicate balance of sweet peach and tangy citrus notes.'
+  },
+  {
+    id: 'p3',
+    name: 'Fresh Hairy Rambutan',
+    category: 'Fruits',
+    price: 6.50,
+    oldPrice: 8.90,
+    offerPercent: 27,
+    unit: '400g',
+    isSpecial: true,
+    rating: 4.7,
+    origin: 'Indonesia',
+    image: 'https://images.unsplash.com/photo-1582234372722-50d7ccc30ebd?w=800&auto=format&fit=crop&q=80',
+    description: 'Distinctive tropical fruit with soft red spiky skin containing translucent, sweet, and grape-like fragrant flesh.'
+  },
+  {
+    id: 'p4',
+    name: 'Golden Passion Fruit (Maracuja)',
+    category: 'Fruits',
+    price: 5.40,
+    unit: '3 pcs',
+    isSpecial: false,
+    rating: 4.9,
+    origin: 'Ecuador',
+    image: 'https://images.unsplash.com/photo-1534531141161-e4e6d28a01dd?w=800&auto=format&fit=crop&q=80',
+    description: 'Intensely aromatic fruit with aromatic pulp and crunchy seeds. Ideal for fresh juices, exotic desserts, and cocktail mixology.'
+  },
+  {
+    id: 'p5',
+    name: 'Fresh Monthong Durian Segments',
+    category: 'Fruits',
+    price: 19.90,
+    oldPrice: 24.90,
+    offerPercent: 20,
+    unit: '300g chilled pack',
+    isSpecial: true,
+    rating: 4.6,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1588615419955-522b51b37368?w=800&auto=format&fit=crop&q=80',
+    description: 'The legendary "King of Fruits". Creamy, custard-like texture with a rich, complex sweet flavor profile for true exotic connoisseurs.'
+  },
+  {
+    id: 'p6',
+    name: 'Star Fruit (Carambola)',
+    category: 'Fruits',
+    price: 4.80,
+    unit: '2 pcs',
+    isSpecial: false,
+    rating: 4.5,
+    origin: 'Malaysia',
+    image: 'https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?w=800&auto=format&fit=crop&q=80',
+    description: 'Crisp, juicy star-shaped slices with a refreshing apple-citrus tang. Perfect for salad garnishes and cocktail decorations.'
+  },
+  {
+    id: 'p26',
+    name: 'Sweet Yellow Passion Fruit (Granadilla)',
+    category: 'Fruits',
+    price: 4.20,
+    oldPrice: 5.50,
+    offerPercent: 24,
+    unit: '2 pcs',
+    isSpecial: true,
+    rating: 4.8,
+    origin: 'Colombia',
+    image: 'https://images.unsplash.com/photo-1528821128474-27f963b072b7?w=800&auto=format&fit=crop&q=80',
+    description: 'Brittle orange shell housing ultra-sweet translucent seed pulp with a smooth honeyed scent.'
+  },
+  {
+    id: 'p27',
+    name: 'Fresh Baby Pineapple (Phulae)',
+    category: 'Fruits',
+    price: 3.90,
+    unit: '1 pc (~300g)',
+    isSpecial: false,
+    rating: 4.9,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80',
+    description: 'Miniature pineapples with intense aroma, crisp edible core, and low acidity.'
+  },
+
+  // --- VEGETABLES & HERBS ---
+  {
+    id: 'p17',
+    name: 'Fresh Galangal Root',
+    category: 'Vegetables & Herbs',
+    price: 3.80,
+    unit: '200g',
+    isSpecial: false,
+    rating: 4.8,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=800&auto=format&fit=crop&q=80',
+    description: 'Essential aromatic root for Tom Yum and Tom Kha soups. Sharp, pine-like citrus flavor distinct from ginger.'
+  },
+  {
+    id: 'p18',
+    name: 'Fresh Thai Holy Basil (Kra Pao)',
+    category: 'Vegetables & Herbs',
+    price: 2.10,
+    oldPrice: 2.90,
+    offerPercent: 28,
+    unit: '100g bunch',
+    isSpecial: true,
+    rating: 4.9,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=800&auto=format&fit=crop&q=80',
+    description: 'Distinct pepper-clove aroma. The core ingredient for classic Pad Kra Pao stir-fries.'
+  },
+  {
+    id: 'p19',
+    name: 'Fresh Lemongrass Stalks',
+    category: 'Vegetables & Herbs',
+    price: 2.50,
+    unit: '3 stalks',
+    isSpecial: false,
+    rating: 4.7,
+    origin: 'Vietnam',
+    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80',
+    description: 'Fragrant, citrus-infused stalks used to infuse curries, stocks, teas, and aromatic marinades.'
+  },
+  {
+    id: 'p28',
+    name: 'Fresh Kaffir Lime Leaves',
+    category: 'Vegetables & Herbs',
+    price: 1.99,
+    oldPrice: 2.80,
+    offerPercent: 29,
+    unit: '50g pack',
+    isSpecial: true,
+    rating: 5.0,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1592417817098-8f3d6eb23659?w=800&auto=format&fit=crop&q=80',
+    description: 'Double-lobed glossy emerald leaves delivering an unmatched citrus perfume to green curries.'
+  },
+
+  // --- SPICES ---
+  {
+    id: 'p7',
+    name: 'Royal Grade Sargol Persian Saffron',
+    category: 'Spices',
+    price: 11.99,
+    oldPrice: 14.99,
+    offerPercent: 20,
+    unit: '1g tin',
+    isSpecial: true,
+    rating: 5.0,
+    origin: 'Iran',
+    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=800&auto=format&fit=crop&q=80',
+    description: 'Hand-harvested pure red stigma threads. Imparts intense golden color and unmatched floral aroma to risottos, paellas, and saffron tea.'
+  },
+  {
+    id: 'p8',
+    name: 'Madagascar Bourbon Vanilla Pods',
+    category: 'Spices',
+    price: 11.20,
+    unit: '3 whole pods',
+    isSpecial: false,
+    rating: 4.9,
+    origin: 'Madagascar',
+    image: 'https://images.unsplash.com/photo-1603569283847-be29b8b3bf1d?w=800&auto=format&fit=crop&q=80',
+    description: 'Plump, moist Grade-A gourmet vanilla beans filled with millions of rich seeds. Essential for baking, custard creams, and luxury syrups.'
+  },
+  {
+    id: 'p9',
+    name: 'Whole Green Cardamom Pods',
+    category: 'Spices',
+    price: 7.50,
+    unit: '100g',
+    isSpecial: false,
+    rating: 4.8,
+    origin: 'Kerala, India',
+    image: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=800&auto=format&fit=crop&q=80',
+    description: 'Aromatic green pods bursting with essential oils. Adds citrus-spiced depth to Indian curries, chai teas, and Scandinavian bakery.'
+  },
+  {
+    id: 'p10',
+    name: 'Organic Ceylon True Cinnamon Sticks',
+    category: 'Spices',
+    price: 4.90,
+    oldPrice: 6.80,
+    offerPercent: 28,
+    unit: '150g',
+    isSpecial: true,
+    rating: 4.9,
+    origin: 'Sri Lanka',
+    image: 'https://images.unsplash.com/photo-1509358271058-acd05cc93b7a?w=800&auto=format&fit=crop&q=80',
+    description: 'Soft-layer "Cinnamomum Verum" quills offering a delicate, sweet warm flavor without coumarin harshness.'
+  },
+  {
+    id: 'p29',
+    name: 'Whole Star Anise Pods',
+    category: 'Spices',
+    price: 3.99,
+    oldPrice: 5.20,
+    offerPercent: 23,
+    unit: '100g',
+    isSpecial: true,
+    rating: 4.8,
+    origin: 'Vietnam',
+    image: 'https://images.unsplash.com/photo-1509358271058-acd05cc93b7a?w=800&auto=format&fit=crop&q=80',
+    description: 'Beautiful 8-pointed star pods containing warm licorice aroma for Vietnamese Pho and spiced broths.'
+  },
+
+  // --- BEVERAGES ---
+  {
+    id: 'p11',
+    name: 'Kyoto Uji Ceremonial Matcha Powder',
+    category: 'Beverages',
+    price: 16.50,
+    oldPrice: 22.00,
+    offerPercent: 25,
+    unit: '50g tin',
+    isSpecial: true,
+    rating: 5.0,
+    origin: 'Kyoto, Japan',
+    image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800&auto=format&fit=crop&q=80',
+    description: 'First-harvest shade-grown stone-ground ceremonial matcha. Deep electric green color with velvety umami taste and smooth lather.'
+  },
+  {
+    id: 'p12',
+    name: 'Organic Butterfly Pea Flower Tea',
+    category: 'Beverages',
+    price: 8.50,
+    unit: '80g loose tea',
+    isSpecial: false,
+    rating: 4.8,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=800&auto=format&fit=crop&q=80',
+    description: 'Natural cobalt-blue herbal infusion that magically transforms into vibrant purple upon adding lemon juice or citrus acidity.'
+  },
+  {
+    id: 'p13',
+    name: 'Fresh King Young Coconut',
+    category: 'Beverages',
+    price: 4.50,
+    unit: '1 pc',
+    isSpecial: false,
+    rating: 4.7,
+    origin: 'Sri Lanka',
+    image: 'https://images.unsplash.com/photo-1543362906-acfc16c67564?w=800&auto=format&fit=crop&q=80',
+    description: 'Naturally sweet electrolyte-rich raw coconut water inside soft shell with delicious edible tender jelly flesh inside.'
+  },
+  {
+    id: 'p14',
+    name: 'Sun-Dried Egyptian Hibiscus Flowers (Karkadeh)',
+    category: 'Beverages',
+    price: 5.90,
+    unit: '200g',
+    isSpecial: false,
+    rating: 4.8,
+    origin: 'Egypt',
+    image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&auto=format&fit=crop&q=80',
+    description: 'Whole dark crimson calyces for brewing tart, ruby-red iced infusions or comforting hot vitamin-C teas.'
+  },
+
+  // --- SAUCES & CONDIMENTS ---
+  {
+    id: 'p20',
+    name: 'Artisanal Korean Gochujang Paste',
+    category: 'Sauces & Condiments',
+    price: 6.90,
+    unit: '500g tub',
+    isSpecial: false,
+    rating: 4.9,
+    origin: 'South Korea',
+    image: 'https://images.unsplash.com/photo-1583032015879-e5022cb1db02?w=800&auto=format&fit=crop&q=80',
+    description: 'Naturally fermented chili paste offering deep savory umami, mild heat, and subtle sweetness. Perfect for Bibimbap.'
+  },
+  {
+    id: 'p21',
+    name: 'Aged First-Press Premium Fish Sauce',
+    category: 'Sauces & Condiments',
+    price: 6.90,
+    oldPrice: 8.90,
+    offerPercent: 22,
+    unit: '250ml bottle',
+    isSpecial: true,
+    rating: 5.0,
+    origin: 'Phu Quoc, Vietnam',
+    image: 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=800&auto=format&fit=crop&q=80',
+    description: 'Barrel-aged 100% pure black anchovy extract. Imparts rich savory complexity without overpowering fishiness.'
+  },
+  {
+    id: 'p22',
+    name: 'Traditional Pandan Kaya Coconut Jam',
+    category: 'Sauces & Condiments',
+    price: 5.50,
+    unit: '240g jar',
+    isSpecial: false,
+    rating: 4.8,
+    origin: 'Malaysia',
+    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80',
+    description: 'Fragrant sweet coconut custard enriched with fresh natural pandan leaf juice. Famous on buttered toasts.'
+  },
+
+  // --- GRAINS & PANTRY ---
+  {
+    id: 'p23',
+    name: 'Royal Hom Mali Jasmine Rice (New Crop)',
+    category: 'Grains & Pantry',
+    price: 13.50,
+    unit: '5kg bag',
+    isSpecial: false,
+    rating: 4.9,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80',
+    description: 'Long-grain fragrant rice known for its delicate floral aroma and soft, slightly sticky fluffy texture when steamed.'
+  },
+  {
+    id: 'p24',
+    name: 'Organic Black Rice (Forbidden Rice)',
+    category: 'Grains & Pantry',
+    price: 4.20,
+    oldPrice: 5.90,
+    offerPercent: 28,
+    unit: '1kg pack',
+    isSpecial: true,
+    rating: 4.7,
+    origin: 'Indonesia',
+    image: 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=800&auto=format&fit=crop&q=80',
+    description: 'Ancient heirloom grain loaded with anthocyanin antioxidants. Nutty taste and striking deep purple-black tone.'
+  },
+
+  // --- SNACKS & SWEETS ---
+  {
+    id: 'p15',
+    name: 'Jumbo Premium Medjool Dates',
+    category: 'Snacks & Sweets',
+    price: 7.40,
+    oldPrice: 9.90,
+    offerPercent: 25,
+    unit: '500g box',
+    isSpecial: true,
+    rating: 4.9,
+    origin: 'Jordan',
+    image: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=800&auto=format&fit=crop&q=80',
+    description: 'Soft, caramel-like organic giant dates with melting sweetness. Known as nature\'s candy and natural energy powerhouse.'
+  },
+  {
+    id: 'p16',
+    name: 'Vacuum Freeze-Dried Durian Crisps',
+    category: 'Snacks & Sweets',
+    price: 7.20,
+    unit: '100g pouch',
+    isSpecial: false,
+    rating: 4.6,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281898?w=800&auto=format&fit=crop&q=80',
+    description: '100% pure real fruit without added oil or sugar. Light crunch with authentic rich tropical flavor preserved.'
+  },
+  {
+    id: 'p25',
+    name: 'Crispy Roasted Tamarind Bites',
+    category: 'Snacks & Sweets',
+    price: 2.90,
+    oldPrice: 3.90,
+    offerPercent: 25,
+    unit: '150g',
+    isSpecial: true,
+    rating: 4.5,
+    origin: 'Thailand',
+    image: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=800&auto=format&fit=crop&q=80',
+    description: 'Sweet and tangy seedless tamarind coated in organic chili-sugar coating for a chewy mouthwatering chew.'
+  }
+];
