@@ -1,133 +1,348 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
 import ProductCard from '../components/ProductCard';
+import QuantityControl from '../components/QuantityControl';
+import LoadingSpinner from '../components/LoadingSpinner';
+import EmptyState from '../components/EmptyState';
+import { HeartIcon, StarIcon, CartIcon, ImageIcon, ShieldCheckIcon, TruckIcon, AlertIcon } from '../components/Icons';
+import useProductDetail from '../hooks/useProductDetail';
+
+const TABS = [
+  { id: 'description', label: 'Description' },
+  { id: 'information', label: 'Nutrition & Information' },
+  { id: 'reviews', label: 'Reviews' }
+];
+
+function Stars({ value }) {
+  const rounded = Math.round(value || 0);
+  return (
+    <span className="stars" aria-hidden="true">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <StarIcon key={n} size={18} className={n <= rounded ? 'star-on' : 'star-off'} />
+      ))}
+    </span>
+  );
+}
 
 export default function ProductDetailPage() {
-  const { selectedProduct, addToCart, wishlist, toggleWishlist, formatPrice, setCurrentPage, products } = useContext(StoreContext);
-  const [quantity, setQuantity] = useState(1);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { addToCart, wishlist, toggleWishlist, formatPrice } = useContext(StoreContext);
+  const { status, error, product, category, related, relatedLoading, reload } = useProductDetail(id);
 
-  if (!selectedProduct) {
+  const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState(0);
+  const [failedImages, setFailedImages] = useState({});
+  const [tab, setTab] = useState('description');
+  const [added, setAdded] = useState(0);
+
+  // A different product (new URL) starts fresh
+  useEffect(() => {
+    setQuantity(1);
+    setActiveImage(0);
+    setFailedImages({});
+    setTab('description');
+    setAdded(0);
+  }, [id]);
+
+  useEffect(() => {
+    if (!product) return undefined;
+    const previous = document.title;
+    document.title = `${product.name} | EXOTIC Food Market`;
+    return () => {
+      document.title = previous;
+    };
+  }, [product]);
+
+  useEffect(() => {
+    if (!added) return undefined;
+    const timer = setTimeout(() => setAdded(0), 4000);
+    return () => clearTimeout(timer);
+  }, [added]);
+
+  if (status === 'loading') {
     return (
-      <div style={{ maxWidth: '600px', margin: '40px auto', padding: '40px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)', textAlign: 'center' }}>
-        <h2 style={{ color: 'var(--text-primary)', margin: '0 0 12px 0' }}>No product selected</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>Please select an item from our store catalog to view details.</p>
-        <button className="add-to-cart-btn" style={{ width: 'auto', padding: '10px 20px' }} onClick={() => setCurrentPage('products')}>
-          Browse Catalog
-        </button>
+      <div className="pdp container pdp--state">
+        <LoadingSpinner size="lg" label="Loading product..." />
       </div>
     );
   }
 
-  const isWishlisted = wishlist.some((item) => item.id === selectedProduct.id);
-  const relatedProducts = products.filter((p) => p.category === selectedProduct.category && p.id !== selectedProduct.id);
+  if (status === 'notfound') {
+    return (
+      <div className="pdp container pdp--state">
+        <EmptyState
+          title="Product not found"
+          message="The product you're looking for doesn't exist or is no longer available."
+          action={{ label: 'Browse the shop', to: '/shop' }}
+        />
+      </div>
+    );
+  }
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addToCart(selectedProduct);
-    }
+  if (status === 'error') {
+    return (
+      <div className="pdp container pdp--state">
+        <EmptyState
+          icon={<AlertIcon size={32} />}
+          title="We couldn't load this product"
+          message={error}
+          action={{ label: 'Try again', onClick: reload }}
+        />
+      </div>
+    );
+  }
+
+  // ---- Ready ------------------------------------------------------------------
+  const images = [...new Set([product.image, ...(product.images || [])].filter(Boolean))];
+  const currentImage = images[Math.min(activeImage, images.length - 1)];
+  const hasStockInfo = typeof product.stock === 'number';
+  const outOfStock = hasStockInfo && product.stock <= 0;
+  const lowStock = hasStockInfo && product.stock > 0 && product.stock <= 5;
+  const maxQty = hasStockInfo ? Math.max(1, Math.min(product.stock, 99)) : 99;
+  const hasDiscount = Boolean(product.oldPrice && product.oldPrice > product.price);
+  const discountPercent = hasDiscount ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
+  const isWishlisted = wishlist.some((item) => item.id === product.id);
+  const reviewCount = product.reviewCount || 0;
+
+  const handleAdd = () => {
+    addToCart(product, quantity);
+    setAdded(quantity);
   };
 
-  return (
-    <div style={{ maxWidth: '1000px', margin: '30px auto', padding: '0 20px' }}>
-      {/* Back Navigation */}
-      <button
-        onClick={() => setCurrentPage('products')}
-        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: '20px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}
-      >
-        ← Back to Catalog
-      </button>
+  const handleBuyNow = () => {
+    addToCart(product, quantity);
+    navigate('/checkout');
+  };
 
-      {/* Main Detail Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', background: 'var(--bg-surface)', padding: '24px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)', marginBottom: '40px' }}>
-        {/* Product Image */}
-        <div style={{ position: 'relative' }}>
-          <img
-            src={selectedProduct.image}
-            alt={selectedProduct.name}
-            style={{ width: '100%', height: '360px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }}
-          />
-          <button
-            className="heart-btn"
-            onClick={() => toggleWishlist(selectedProduct)}
-            style={{ top: '12px', right: '12px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}
-          >
-            {isWishlisted ? '❤️' : '🤍'}
-          </button>
+  const infoRows = [
+    ['Brand', product.brand],
+    ['Category', category?.name],
+    ['Origin', product.origin],
+    ['Size / Unit', product.unit],
+    ['Availability', outOfStock ? 'Out of stock' : hasStockInfo ? `${product.stock} in stock` : 'In stock']
+  ].filter(([, value]) => value);
+
+  return (
+    <div className="pdp container">
+      <nav className="breadcrumb" aria-label="Breadcrumb">
+        <Link to="/">Home</Link>
+        <span aria-hidden="true">/</span>
+        <Link to="/shop">Shop</Link>
+        {category && (category.name || category.slug) && (
+          <>
+            <span aria-hidden="true">/</span>
+            {category.slug ? (
+              <Link to={`/shop/${category.slug}`}>{category.name || 'Category'}</Link>
+            ) : (
+              <span>{category.name || 'Category'}</span>
+            )}
+          </>
+        )}
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{product.name}</span>
+      </nav>
+
+      <div className="pdp-top">
+        {/* Gallery */}
+        <div className="pdp-gallery">
+          <div className="pdp-gallery__main">
+            <button
+              type="button"
+              className={`product-card__wish${isWishlisted ? ' is-active' : ''}`}
+              aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+              aria-pressed={isWishlisted}
+              onClick={() => toggleWishlist(product)}
+            >
+              <HeartIcon size={18} filled={isWishlisted} />
+            </button>
+            {currentImage && !failedImages[currentImage] ? (
+              <img
+                src={currentImage}
+                alt={product.name}
+                onError={() => setFailedImages((prev) => ({ ...prev, [currentImage]: true }))}
+              />
+            ) : (
+              <span className="product-card__placeholder" aria-hidden="true">
+                <ImageIcon size={72} />
+              </span>
+            )}
+          </div>
+
+          {images.length > 0 && (
+            <ul className="pdp-thumbs" aria-label="Product images">
+              {images.map((src, index) => (
+                <li key={src}>
+                  <button
+                    type="button"
+                    className={`pdp-thumb${index === activeImage ? ' is-active' : ''}`}
+                    aria-label={`Show image ${index + 1} of ${images.length}`}
+                    aria-current={index === activeImage ? 'true' : undefined}
+                    onClick={() => setActiveImage(index)}
+                  >
+                    {failedImages[src] ? <ImageIcon size={24} /> : <img src={src} alt="" loading="lazy" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        {/* Information & Action Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-green-bright)', fontWeight: 'bold', background: 'var(--bg-input)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-glass)' }}>
-                {selectedProduct.category}
-              </span>
-              {selectedProduct.isSpecial && (
-                <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#f59e0b', fontWeight: 'bold', background: 'rgba(245, 158, 11, 0.1)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                  🔥 Special Offer
-                </span>
-              )}
-            </div>
+        {/* Info */}
+        <div className="pdp-info">
+          {product.brand && <p className="pdp-brand">{product.brand}</p>}
+          <h1 className="pdp-title">{product.name}</h1>
 
-            <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 12px 0', fontFamily: 'var(--font-heading)' }}>
-              {selectedProduct.name}
-            </h1>
-
-            <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--neon-green-bright)', marginBottom: '16px' }}>
-              {formatPrice(selectedProduct.price)}
-            </div>
-
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', margin: '0 0 24px 0' }}>
-              {selectedProduct.description}
-            </p>
-
-            <div style={{ padding: '12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)', marginBottom: '24px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>⚡ Guaranteed Quality &amp; Storage</div>
-              <div style={{ color: 'var(--text-muted)' }}>• Harvested &amp; packaged under certified organic standards</div>
-              <div style={{ color: 'var(--text-muted)' }}>• Shipped in insulated cool-pack temperature control</div>
-            </div>
+          <div className="pdp-rating">
+            <Stars value={product.rating} />
+            <span className="pdp-rating__text">
+              {reviewCount > 0 ? `${product.rating} (${reviewCount} reviews)` : 'No reviews yet'}
+            </span>
           </div>
 
-          {/* Quantity and Add Button */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Quantity:</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-input)', padding: '4px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)' }}>
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  style={{ padding: '4px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
-                  -
-                </button>
-                <span style={{ padding: '0 8px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{quantity}</span>
-                <button
-                  onClick={() => setQuantity((q) => q + 1)}
-                  style={{ padding: '4px 12px', background: 'var(--bg-surface)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
-                  +
-                </button>
-              </div>
+          <div className="pdp-price">
+            <span className="pdp-price__current">{formatPrice(product.price)}</span>
+            {hasDiscount && <span className="pdp-price__old">{formatPrice(product.oldPrice)}</span>}
+            {hasDiscount && <span className="pdp-price__badge">-{discountPercent}%</span>}
+          </div>
+
+          <p className={`stock-pill ${outOfStock ? 'stock-pill--out' : lowStock ? 'stock-pill--low' : 'stock-pill--in'}`}>
+            {outOfStock ? 'Out of Stock' : lowStock ? `Only ${product.stock} left` : 'In Stock'}
+          </p>
+
+          {product.shortDescription && <p className="pdp-short">{product.shortDescription}</p>}
+
+          <div className="pdp-buy">
+            <div className="pdp-qty">
+              <span id="qty-label">Quantity</span>
+              <QuantityControl
+                value={quantity}
+                min={1}
+                max={maxQty}
+                disabled={outOfStock}
+                label="Quantity"
+                onChange={setQuantity}
+              />
             </div>
 
-            <button className="add-to-cart-btn" style={{ padding: '14px', fontSize: '14px' }} onClick={handleAddToCart}>
-              Add {quantity} to Shopping Cart ({formatPrice(selectedProduct.price * quantity)})
+            <button type="button" className="btn btn-primary btn-block pdp-btn" disabled={outOfStock} onClick={handleAdd}>
+              <CartIcon size={18} /> Add to Cart
             </button>
+            <button type="button" className="btn btn-outline btn-block pdp-btn" disabled={outOfStock} onClick={handleBuyNow}>
+              Buy Now
+            </button>
+
+            <p className="pdp-added" role="status" aria-live="polite">
+              {added > 0 && (
+                <>
+                  Added {added} {added === 1 ? 'item' : 'items'} to your cart. <Link to="/cart">View cart</Link>
+                </>
+              )}
+            </p>
           </div>
+
+          <ul className="pdp-perks">
+            <li>
+              <button type="button" className={`perk-btn${isWishlisted ? ' is-active' : ''}`} onClick={() => toggleWishlist(product)}>
+                <HeartIcon size={22} filled={isWishlisted} />
+                <span>{isWishlisted ? 'In your wishlist' : 'Add to Wishlist'}</span>
+              </button>
+            </li>
+            <li>
+              <span className="perk">
+                <TruckIcon size={22} />
+                <span>Fast &amp; Safe Delivery</span>
+              </span>
+            </li>
+            <li>
+              <span className="perk">
+                <ShieldCheckIcon size={22} />
+                <span>Secure Checkout</span>
+              </span>
+            </li>
+          </ul>
         </div>
       </div>
 
-      {/* Related Category Products */}
-      {relatedProducts.length > 0 && (
-        <div>
-          <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '16px', fontFamily: 'var(--font-heading)' }}>
-            More in {selectedProduct.category}
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
-            {relatedProducts.map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
-            ))}
-          </div>
+      {/* Tabs */}
+      <section className="pdp-tabs" aria-label="Product details">
+        <div className="pdp-tabs__list" role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`tab-${t.id}`}
+              aria-selected={tab === t.id}
+              aria-controls={`panel-${t.id}`}
+              className={`pdp-tab${tab === t.id ? ' is-active' : ''}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.id === 'reviews' ? `Reviews (${reviewCount})` : t.label}
+            </button>
+          ))}
         </div>
+
+        <div className="pdp-tabs__panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+          {tab === 'description' && (
+            <div className="pdp-description">
+              {product.description ? (
+                product.description
+                  .split(/\n{2,}/)
+                  .map((para, index) => <p key={index}>{para}</p>)
+              ) : (
+                <p>No description available for this product.</p>
+              )}
+            </div>
+          )}
+
+          {tab === 'information' && (
+            <dl className="info-table">
+              {infoRows.map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {tab === 'reviews' && (
+            <div className="reviews-summary">
+              <div className="reviews-summary__score">
+                <strong>{reviewCount > 0 ? Number(product.rating || 0).toFixed(1) : '–'}</strong>
+                <Stars value={product.rating} />
+                <span>
+                  {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
+                </span>
+              </div>
+              <p className="reviews-summary__note">
+                {reviewCount > 0
+                  ? 'This rating is the average of our customers’ reviews. Individual written reviews will appear here soon.'
+                  : 'This product has no reviews yet.'}
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Related products */}
+      {(relatedLoading || related.length > 0) && (
+        <section className="pdp-related" aria-labelledby="related-title">
+          <h2 id="related-title" className="section-title">
+            Related Products
+          </h2>
+          {relatedLoading ? (
+            <LoadingSpinner size="sm" label="Loading related products..." />
+          ) : (
+            <div className="product-grid">
+              {related.map((item) => (
+                <ProductCard key={item.id} product={item} />
+              ))}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

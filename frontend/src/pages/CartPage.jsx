@@ -1,131 +1,225 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
+import { AuthContext } from '../context/AuthContext';
+import QuantityControl from '../components/QuantityControl';
+import EmptyState from '../components/EmptyState';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { ImageIcon, TrashIcon, CartIcon, AlertIcon } from '../components/Icons';
+import useCartQuote from '../hooks/useCartQuote';
+
+const ISSUE_TEXT = {
+  unavailable: 'No longer available',
+  out_of_stock: 'Out of stock'
+};
 
 export default function CartPage() {
-  const { cart, updateQuantity, formatPrice, setCurrentPage, setCart } = useContext(StoreContext);
-  const [promoCode, setPromoCode] = useState('');
-  const [discount, setDiscount] = useState(0);
+  const { cart, updateQuantity, removeFromCart, clearCart, formatPrice, promoCode, setPromoCode } = useContext(StoreContext);
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const { quote, loading, error, refresh } = useCartQuote(cart, promoCode);
+
+  const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
+  const [notice, setNotice] = useState('');
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shippingCost = subtotal > 49 || cart.length === 0 ? 0 : 4.90;
-  const discountedSubtotal = subtotal * (1 - discount);
-  const finalTotal = discountedSubtotal + shippingCost;
+  const lineById = useMemo(() => new Map((quote?.items || []).map((l) => [l.productId, l])), [quote]);
 
-  const handleApplyPromo = (e) => {
-    e.preventDefault();
-    if (promoCode.trim().toUpperCase() === 'EXOTIC10') {
-      setDiscount(0.10);
-      setPromoError('');
-    } else {
-      setPromoError('Invalid promo code. Try "EXOTIC10" for 10% off.');
+  // Quantities above the real stock are reduced automatically
+  useEffect(() => {
+    if (!quote) return;
+    const tooMany = quote.items.filter((l) => l.issue === 'insufficient_stock');
+    if (tooMany.length === 0) return;
+    tooMany.forEach((l) => {
+      const item = cart.find((i) => i.id === l.productId);
+      if (item) updateQuantity(item.id, l.stock - item.quantity);
+    });
+    setNotice(tooMany.map((l) => `"${l.name}" was reduced to ${l.stock} because that is all we have in stock.`).join(' '));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote]);
+
+  // An invalid promo code is reported once and dropped
+  useEffect(() => {
+    if (quote?.promo && !quote.promo.valid) {
+      setPromoError(quote.promo.message);
+      setPromoCode('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote]);
+
+  const applyPromo = (e) => {
+    e.preventDefault();
+    const code = promoInput.trim();
+    if (!code) {
+      setPromoError('Enter a promo code');
+      return;
+    }
+    setPromoError('');
+    setPromoCode(code.toUpperCase());
+    setPromoInput('');
   };
 
+  if (cart.length === 0) {
+    return (
+      <div className="container page-section">
+        <EmptyState
+          title="Your cart is empty"
+          message="Looks like you haven't added anything yet."
+          action={{ label: 'Continue Shopping', to: '/shop' }}
+        />
+      </div>
+    );
+  }
+
+  const itemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
+  const promoApplied = quote?.promo?.valid ? quote.promo : null;
+  const freeShippingGap = quote && quote.shippingPrice > 0 ? quote.freeShippingThreshold - quote.itemsPrice : 0;
+
   return (
-    <div style={{ maxWidth: '900px', margin: '30px auto', padding: '0 20px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '20px', fontFamily: 'var(--font-heading)' }}>
-        🛒 Shopping Cart &amp; Summary
-      </h1>
+    <div className="cart container">
+      <div className="cart-head">
+        <h1 className="page-title">
+          Your Cart <span className="cart-head__count">({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>
+        </h1>
+        <button type="button" className="link-btn" onClick={clearCart}>
+          Clear cart
+        </button>
+      </div>
 
-      {cart.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
-          <h2 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0' }}>Your cart is empty</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>Look through our fresh catalog to add exotic items.</p>
-          <button className="add-to-cart-btn" style={{ width: 'auto', padding: '10px 24px' }} onClick={() => setCurrentPage('products')}>
-            Browse Catalog
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-          {/* Cart Items List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {cart.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: 'flex',
-                  gap: '16px',
-                  alignItems: 'center',
-                  padding: '12px',
-                  background: 'var(--bg-surface)',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-glass)'
-                }}
-              >
-                <img src={item.image} alt={item.name} style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>{item.name}</h3>
-                  <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--neon-green-bright)' }}>{formatPrice(item.price)}</div>
+      {notice && (
+        <p className="notice notice--warn" role="status">
+          {notice}
+        </p>
+      )}
+
+      <div className="cart-layout">
+        <ul className="cart-items" aria-label="Cart items">
+          {cart.map((item) => {
+            const line = lineById.get(item.id);
+            const issue = line?.issue;
+            const blocked = issue === 'unavailable' || issue === 'out_of_stock';
+            const name = line && issue !== 'unavailable' ? line.name : item.name || 'Unavailable product';
+            const price = line ? line.price : item.price;
+            const stock = line ? line.stock : item.stock;
+            const image = (line && line.image) || item.image;
+            const unit = (line && line.unit) || item.unit;
+            const lineTotal = line ? line.lineTotal : price * item.quantity;
+
+            return (
+              <li key={item.id} className={`cart-item${blocked ? ' is-blocked' : ''}`}>
+                <Link to={blocked ? '/shop' : `/products/${item.id}`} className="cart-item__image" aria-label={name}>
+                  {image ? <img src={image} alt={name} loading="lazy" /> : <ImageIcon size={32} />}
+                </Link>
+
+                <div className="cart-item__info">
+                  <Link to={blocked ? '/shop' : `/products/${item.id}`} className="cart-item__name">
+                    {name}
+                  </Link>
+                  {unit && <span className="cart-item__unit">{unit}</span>}
+                  <span className="cart-item__price">{formatPrice(price)}</span>
+                  {blocked && <span className="cart-item__issue">{ISSUE_TEXT[issue]}</span>}
+                  {!blocked && typeof stock === 'number' && stock <= 5 && <span className="cart-item__low">Only {stock} left</span>}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button onClick={() => updateQuantity(item.id, -1)} style={{ padding: '4px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
-                  <span style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '14px' }}>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} style={{ padding: '4px 10px', background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
+
+                <div className="cart-item__qty">
+                  <QuantityControl
+                    value={item.quantity}
+                    min={1}
+                    max={Math.max(1, Math.min(typeof stock === 'number' ? stock : 99, 99))}
+                    disabled={blocked}
+                    label={`${name} quantity`}
+                    onChange={(next) => updateQuantity(item.id, next - item.quantity)}
+                  />
                 </div>
+
+                <div className="cart-item__total">{formatPrice(lineTotal)}</div>
+
+                <button type="button" className="cart-item__remove" aria-label={`Remove ${name} from cart`} onClick={() => removeFromCart(item.id)}>
+                  <TrashIcon size={20} />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        <aside className="summary-card" aria-label="Order summary">
+          <h2>Order Summary</h2>
+
+          {promoApplied ? (
+            <div className="promo-applied">
+              <span>
+                <strong>{promoApplied.code}</strong> applied &mdash; {promoApplied.message}
+              </span>
+              <button type="button" className="link-btn" onClick={() => setPromoCode('')}>
+                Remove
+              </button>
+            </div>
+          ) : (
+            <form className="promo-form" onSubmit={applyPromo}>
+              <label htmlFor="promo-input" className="sr-only">
+                Promo code
+              </label>
+              <input id="promo-input" type="text" placeholder="Promo code" value={promoInput} onChange={(e) => setPromoInput(e.target.value)} autoComplete="off" />
+              <button type="submit" className="btn btn-outline">
+                Apply
+              </button>
+            </form>
+          )}
+          {promoError && (
+            <p className="error-msg" role="alert">
+              {promoError}
+            </p>
+          )}
+
+          {error ? (
+            <div className="notice notice--error" role="alert">
+              <AlertIcon size={18} /> <span>{error}</span>
+              <button type="button" className="link-btn" onClick={refresh}>
+                Try again
+              </button>
+            </div>
+          ) : !quote ? (
+            <LoadingSpinner size="sm" label="Calculating totals..." />
+          ) : (
+            <dl className="totals">
+              <div>
+                <dt>Subtotal</dt>
+                <dd>{formatPrice(quote.itemsPrice)}</dd>
               </div>
-            ))}
-          </div>
-
-          {/* Order Summary Side Card */}
-          <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)', height: 'fit-content' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '16px', fontFamily: 'var(--font-heading)' }}>
-              Order Breakdown
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '16px', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                <span>Subtotal:</span>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{formatPrice(subtotal)}</span>
-              </div>
-
-              {discount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--neon-green-bright)', fontWeight: 'bold' }}>
-                  <span>Discount (10%):</span>
-                  <span>-{formatPrice(subtotal * discount)}</span>
+              {quote.discountPrice > 0 && (
+                <div className="totals__discount">
+                  <dt>Discount</dt>
+                  <dd>-{formatPrice(quote.discountPrice)}</dd>
                 </div>
               )}
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                <span>Shipping (Germany):</span>
-                <span>{shippingCost === 0 ? <strong style={{ color: 'var(--neon-green-bright)' }}>FREE</strong> : formatPrice(shippingCost)}</span>
+              <div>
+                <dt>Shipping</dt>
+                <dd>{quote.shippingPrice === 0 ? 'Free' : formatPrice(quote.shippingPrice)}</dd>
               </div>
-            </div>
-
-            {/* Promo Code Input */}
-            <form onSubmit={handleApplyPromo} style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input
-                  className="form-control"
-                  placeholder="Promo code (e.g. EXOTIC10)"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  style={{ flex: 1, fontSize: '12px' }}
-                />
-                <button type="submit" style={{ padding: '8px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-glass)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>
-                  Apply
-                </button>
+              <div className="totals__grand">
+                <dt>Total</dt>
+                <dd data-testid="cart-total">{formatPrice(quote.totalPrice)}</dd>
               </div>
-              {promoError && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px' }}>{promoError}</div>}
-              {discount > 0 && <div style={{ color: 'var(--neon-green-bright)', fontSize: '11px', marginTop: '4px' }}>✓ 10% Coupon EXOTIC10 applied!</div>}
-            </form>
+            </dl>
+          )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '20px' }}>
-              <span>Total:</span>
-              <span style={{ color: 'var(--neon-green-bright)' }}>{formatPrice(finalTotal)}</span>
-            </div>
+          {freeShippingGap > 0 && <p className="totals__hint">Add {formatPrice(freeShippingGap)} more for free shipping.</p>}
+          {quote && quote.issues.length > 0 && <p className="error-msg">Remove unavailable items to continue.</p>}
 
-            <button
-              className="add-to-cart-btn"
-              style={{ padding: '14px', fontSize: '14px' }}
-              onClick={() => setCurrentPage('checkout')}
-            >
-              Proceed to Checkout ➔
-            </button>
-          </div>
-        </div>
-      )}
+          <button
+            type="button"
+            className="btn btn-primary btn-block pdp-btn"
+            disabled={!quote || loading || !quote.canCheckout}
+            onClick={() => navigate('/checkout')}
+          >
+            <CartIcon size={18} /> Proceed to Checkout
+          </button>
+          <Link to="/shop" className="btn btn-outline btn-block">
+            Continue Shopping
+          </Link>
+          {!user && <p className="totals__hint">Your cart is saved. You&rsquo;ll be asked to sign in at checkout.</p>}
+        </aside>
+      </div>
     </div>
   );
 }

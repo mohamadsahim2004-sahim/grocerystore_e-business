@@ -1,167 +1,207 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
+import QuantityControl from './QuantityControl';
+import { HeartIcon, StarIcon, CartIcon, ImageIcon } from './Icons';
 
 export default function ProductCard({ product }) {
-  const { addToCart, wishlist, toggleWishlist, setSelectedProduct, setCurrentPage, formatPrice } = useContext(StoreContext);
+  const {
+    cart,
+    addToCart,
+    updateQuantity,
+    wishlist,
+    toggleWishlist,
+    formatPrice
+  } = useContext(StoreContext);
 
-  const isWishlisted = wishlist.some((item) => item.id === product.id);
+  const [imageFailed, setImageFailed] = useState(false);
 
-  // Check if product is currently on offer
-  const hasDiscount = Boolean(product.oldPrice && product.oldPrice > product.price);
-  const discountPercent = product.offerPercent || (hasDiscount ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0);
-  const savings = hasDiscount ? product.oldPrice - product.price : 0;
+  const productId = product?.id || product?._id;
+  const detailsPath = productId ? `/products/${productId}` : '/shop';
 
-  const handleCardClick = () => {
-  setSelectedProduct(product);
-  setCurrentPage('detail');
+  const isWishlisted = wishlist.some(
+    (item) => (item.id || item._id) === productId
+  );
+
+  const cartItem = cart.find(
+    (item) => (item.id || item._id) === productId
+  );
+
+  const price = Number(product?.price) || 0;
+  const oldPrice = Number(product?.oldPrice) || 0;
+
+  const hasDiscount = oldPrice > price;
+
+  const discountPercent =
+    product?.offerPercent ||
+    (hasDiscount
+      ? Math.round(((oldPrice - price) / oldPrice) * 100)
+      : 0);
+
+  const hasStockInfo = typeof product?.stock === 'number';
+  const outOfStock = hasStockInfo && product.stock <= 0;
+
+  const handleWishlist = () => {
+    if (!productId) return;
+    toggleWishlist({
+      ...product,
+      id: productId
+    });
+  };
+
+  const handleAddToCart = () => {
+    if (!productId || outOfStock) return;
+
+    addToCart(
+      {
+        ...product,
+        id: productId
+      },
+      1
+    );
+  };
+
+  const handleQuantityChange = (next) => {
+    if (!cartItem) return;
+
+    const currentQuantity = Number(cartItem.quantity) || 0;
+    const delta = next - currentQuantity;
+
+    if (delta !== 0) {
+      updateQuantity(productId, delta);
+    }
   };
 
   return (
-    <div className="card" style={{ position: 'relative', background: 'var(--bg-surface)', border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-      
-      {/* Discount Percentage Badge */}
-      {hasDiscount && (
-        <span
-          style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            background: '#ef4444',
-            color: '#ffffff',
-            fontSize: '11px',
-            fontWeight: '900',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            zIndex: 2,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-          }}
+    <article className="product-card">
+      <div className="product-card__media">
+        {outOfStock ? (
+          <span className="product-card__badge product-card__badge--muted">
+            Out of stock
+          </span>
+        ) : (
+          hasDiscount && (
+            <span className="product-card__badge">
+              -{discountPercent}%
+            </span>
+          )
+        )}
+
+        <button
+          type="button"
+          className={`product-card__wish${
+            isWishlisted ? ' is-active' : ''
+          }`}
+          aria-label={
+            isWishlisted
+              ? `Remove ${product.name} from wishlist`
+              : `Add ${product.name} to wishlist`
+          }
+          aria-pressed={isWishlisted}
+          onClick={handleWishlist}
         >
-          {discountPercent}% OFF
-        </span>
-      )}
+          <HeartIcon size={18} filled={isWishlisted} />
+        </button>
 
-      {/* Wishlist Button */}
-      <button
-        className="heart-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleWishlist(product);
-        }}
-        style={{
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          background: 'rgba(0,0,0,0.5)',
-          border: 'none',
-          borderRadius: '50%',
-          width: '32px',
-          height: '32px',
-          cursor: 'pointer',
-          zIndex: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        {isWishlisted ? '❤️' : '🤍'}
-      </button>
-
-      {/* Product Image */}
-      <div onClick={handleCardClick} style={{ cursor: 'pointer', overflow: 'hidden', height: '180px' }}>
-        <img
-          src={product.image}
-          alt={product.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+        <Link
+          to={detailsPath}
+          className="product-card__image-link"
+          aria-label={`View ${product.name}`}
+        >
+          {product?.image && !imageFailed ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <span
+              className="product-card__placeholder"
+              aria-hidden="true"
+            >
+              <ImageIcon size={36} />
+            </span>
+          )}
+        </Link>
       </div>
 
-      {/* Product Body */}
-      <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-            <span>📍 {product.origin}</span>
-            <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>★ {product.rating}</span>
-          </div>
+      <div className="product-card__body">
+        <div className="product-card__meta">
+          {product?.origin ? (
+            <span className="product-card__origin">
+              {product.origin}
+            </span>
+          ) : (
+            <span />
+          )}
 
-          <h3
-            onClick={handleCardClick}
-            style={{
-              fontSize: '15px',
-              fontWeight: '700',
-              color: 'var(--text-primary)',
-              margin: '0 0 4px 0',
-              cursor: 'pointer',
-              lineHeight: '1.3',
-              height: '38px',
-              overflow: 'hidden'
-            }}
-          >
-            {product.name}
-          </h3>
-
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-            Unit: {product.unit}
-          </div>
+          {product?.rating ? (
+            <span
+              className="product-card__rating"
+              aria-label={`Rated ${product.rating} out of 5`}
+            >
+              <StarIcon size={13} />
+              {product.rating}
+            </span>
+          ) : null}
         </div>
 
-        {/* PRICE DISPLAY SECTION */}
-        <div style={{ marginBottom: '12px' }}>
-          {hasDiscount ? (
-            /* ON OFFER: Shows Old Price, Offer Price, and Savings Individually */
-            <div style={{ background: 'rgba(34, 197, 94, 0.08)', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Regular Price:</span>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'line-through', fontWeight: 'bold' }}>
-                  {formatPrice(product.oldPrice)}
-                </span>
-              </div>
+        <h3 className="product-card__title">
+          <Link to={detailsPath}>{product.name}</Link>
+        </h3>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: 'var(--neon-green-bright)', fontWeight: 'bold' }}>Offer Price:</span>
-                <span style={{ fontSize: '18px', color: 'var(--neon-green-bright)', fontWeight: '900' }}>
-                  {formatPrice(product.price)}
-                </span>
-              </div>
+        {product?.unit && (
+          <p className="product-card__unit">
+            {product.unit}
+          </p>
+        )}
 
-              <div style={{ fontSize: '10px', color: '#22c55e', fontWeight: 'bold', marginTop: '4px', textAlign: 'right' }}>
-                You Save: {formatPrice(savings)} ({discountPercent}%)
-              </div>
-            </div>
-          ) : (
-            /* REGULAR PRICE: Product Not On Offer */
-            <div style={{ padding: '8px 10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Price:</span>
-                <span style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: '800' }}>
-                  {formatPrice(product.price)}
-                </span>
-              </div>
-            </div>
+        <div className="product-card__price">
+          <span className="product-card__price-current">
+            {formatPrice(price)}
+          </span>
+
+          {hasDiscount && (
+            <span className="product-card__price-old">
+              {formatPrice(oldPrice)}
+            </span>
           )}
         </div>
 
-        <button
-          className="add-to-cart-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            addToCart(product);
-          }}
-          style={{
-            width: '100%',
-            padding: '10px',
-            background: 'var(--neon-green-bright)',
-            color: '#000',
-            fontWeight: '800',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          🛒 Add to Cart
-        </button>
+        <div className="product-card__actions">
+          {outOfStock ? (
+            <button
+              type="button"
+              className="btn btn-outline btn-block"
+              disabled
+            >
+              Out of stock
+            </button>
+          ) : cartItem ? (
+            <QuantityControl
+              value={cartItem.quantity}
+              min={0}
+              max={
+                hasStockInfo
+                  ? Math.max(1, Math.min(product.stock, 99))
+                  : 99
+              }
+              label={`${product.name} quantity`}
+              onChange={handleQuantityChange}
+            />
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary btn-block"
+              onClick={handleAddToCart}
+            >
+              <CartIcon size={16} />
+              Add to Cart
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </article>
   );
 }
-
-

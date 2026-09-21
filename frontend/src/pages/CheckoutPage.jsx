@@ -1,145 +1,259 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
+import { AuthContext } from '../context/AuthContext';
+import api, { getErrorMessage } from '../api/client';
+import EmptyState from '../components/EmptyState';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { ImageIcon, AlertIcon } from '../components/Icons';
+import useCartQuote from '../hooks/useCartQuote';
+
+const FIELDS = [
+  { name: 'fullName', label: 'Full Name', autoComplete: 'name', type: 'text' },
+  { name: 'phone', label: 'Phone', autoComplete: 'tel', type: 'tel' },
+  { name: 'street', label: 'Address', autoComplete: 'street-address', type: 'text' },
+  { name: 'city', label: 'City', autoComplete: 'address-level2', type: 'text' },
+  { name: 'postalCode', label: 'Postal Code', autoComplete: 'postal-code', type: 'text' },
+  { name: 'country', label: 'Country', autoComplete: 'country-name', type: 'text' }
+];
+
+// Same rules the server enforces (the server always re-checks)
+function validate(form) {
+  const errors = {};
+  const len = (v, min, max, key, label) => {
+    const t = v.trim();
+    if (t.length < min || t.length > max) errors[key] = `${label} must be between ${min} and ${max} characters`;
+  };
+  len(form.fullName, 2, 100, 'fullName', 'Full name');
+  len(form.phone, 7, 20, 'phone', 'Phone number');
+  len(form.street, 3, 200, 'street', 'Address');
+  len(form.city, 2, 100, 'city', 'City');
+  len(form.postalCode, 2, 12, 'postalCode', 'Postal code');
+  len(form.country, 2, 100, 'country', 'Country');
+  if (!errors.phone && (!/^[+()\-\s\d]+$/.test(form.phone.trim()) || form.phone.replace(/\D/g, '').length < 7)) {
+    errors.phone = 'Enter a valid phone number';
+  }
+  if (!errors.postalCode && !/^[A-Za-z0-9\- ]+$/.test(form.postalCode.trim())) {
+    errors.postalCode = 'Enter a valid postal code';
+  }
+  return errors;
+}
 
 export default function CheckoutPage() {
-  const { cart, user, formatPrice, setCurrentPage, setCart } = useContext(StoreContext);
+  const { cart, clearCart, formatPrice, promoCode } = useContext(StoreContext);
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const { quote, loading, error, refresh, setQuote } = useCartQuote(cart, promoCode);
 
-  const [shippingInfo, setShippingInfo] = useState({
-    name: user.name || '',
-    email: user.email || '',
-    street: user.street || '',
-    city: user.city || '',
-    zip: user.zip || '',
-    country: 'Germany'
+  const saved = user?.addresses?.find((a) => a.isDefault) || user?.addresses?.[0] || {};
+  const [form, setForm] = useState({
+    fullName: user?.name || '',
+    phone: user?.phone || '',
+    street: saved.street || '',
+    city: saved.city || '',
+    postalCode: saved.postalCode || '',
+    country: saved.country || 'Sri Lanka'
   });
+  const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const [paymentMethod, setPaymentMethod] = useState('paypal');
-  const [orderComplete, setOrderComplete] = useState(false);
+  // Once the account finishes loading, fill any still-empty fields
+  useEffect(() => {
+    if (!user) return;
+    setForm((prev) => ({ ...prev, fullName: prev.fullName || user.name || '', phone: prev.phone || user.phone || '' }));
+  }, [user]);
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shippingCost = subtotal > 49 || cart.length === 0 ? 0 : 4.90;
-  const grandTotal = subtotal + shippingCost;
-
-  const handleSubmitOrder = (e) => {
-    e.preventDefault();
-    setOrderComplete(true);
-    setCart([]);
-  };
-
-  if (orderComplete) {
+  if (cart.length === 0) {
     return (
-      <div style={{ maxWidth: '600px', margin: '40px auto', padding: '32px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)', textAlign: 'center' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
-        <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 8px 0', fontFamily: 'var(--font-heading)' }}>
-          Order Confirmed!
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px' }}>
-          Thank you, <strong style={{ color: 'var(--text-primary)' }}>{shippingInfo.name}</strong>. Your order has been placed successfully and a confirmation email was dispatched to <strong style={{ color: 'var(--text-primary)' }}>{shippingInfo.email}</strong>.
-        </p>
-        <button className="add-to-cart-btn" style={{ width: 'auto', padding: '10px 24px' }} onClick={() => setCurrentPage('home')}>
-          Return to Home Page
-        </button>
+      <div className="container page-section">
+        <EmptyState
+          title="Your cart is empty"
+          message="Add something to your cart before checking out."
+          action={{ label: 'Continue Shopping', to: '/shop' }}
+        />
       </div>
     );
   }
 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    if (fieldErrors[e.target.name]) setFieldErrors({ ...fieldErrors, [e.target.name]: undefined });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (submitting) return;
+    setFormError('');
+
+    const errors = validate(form);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setFormError('Please fix the highlighted fields.');
+      return;
+    }
+    if (!quote || !quote.canCheckout) {
+      setFormError('Please review the items in your cart first.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data } = await api.post('/orders', {
+        items: cart.map((i) => ({ productId: i.id, quantity: i.quantity })),
+        shippingAddress: form,
+        paymentMethod,
+        promoCode: promoCode || undefined,
+        expectedTotal: quote.totalPrice
+      });
+      navigate(`/order-success/${data.order._id}`, { replace: true });
+      clearCart();
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.errors) setFieldErrors(data.errors);
+      if (data?.quote) setQuote(data.quote);
+      setFormError(data?.code === 'PRICE_CHANGED' ? `${data.message} New total: ${formatPrice(data.quote.totalPrice)}.` : getErrorMessage(err, 'We could not place your order.'));
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <div style={{ maxWidth: '900px', margin: '30px auto', padding: '0 20px' }}>
-      <button
-        onClick={() => setCurrentPage('cart')}
-        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginBottom: '16px', fontSize: '13px', fontWeight: 'bold' }}
-      >
-        ← Back to Shopping Cart
-      </button>
+    <div className="checkout container">
+      <nav className="breadcrumb" aria-label="Breadcrumb">
+        <Link to="/">Home</Link>
+        <span aria-hidden="true">/</span>
+        <Link to="/cart">Cart</Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Checkout</span>
+      </nav>
+      <h1 className="page-title">Checkout</h1>
 
-      <h1 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '24px', fontFamily: 'var(--font-heading)' }}>
-        🔒 Express Checkout
-      </h1>
-
-      <form onSubmit={handleSubmitOrder} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        {/* Delivery Details */}
-        <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '16px', fontFamily: 'var(--font-heading)' }}>
-            1. Shipping Address
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Full Name</label>
-              <input className="form-control" value={shippingInfo.name} onChange={(e) => setShippingInfo({ ...shippingInfo, name: e.target.value })} required />
-            </div>
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Email Address</label>
-              <input className="form-control" type="email" value={shippingInfo.email} onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })} required />
-            </div>
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Street &amp; House No.</label>
-              <input className="form-control" value={shippingInfo.street} onChange={(e) => setShippingInfo({ ...shippingInfo, street: e.target.value })} required />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>City</label>
-                <input className="form-control" value={shippingInfo.city} onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })} required />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Postal Code</label>
-                <input className="form-control" value={shippingInfo.zip} onChange={(e) => setShippingInfo({ ...shippingInfo, zip: e.target.value })} required />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment & Final Summary */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '16px', fontFamily: 'var(--font-heading)' }}>
-              2. Payment Method
-            </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {[
-                { id: 'paypal', label: 'PayPal / Express Checkout' },
-                { id: 'klarna', label: 'Klarna (Pay in 30 Days)' },
-                { id: 'card', label: 'Credit Card (Visa / Mastercard)' },
-                { id: 'sepa', label: 'SEPA Direct Debit' }
-              ].map((m) => (
-                <label
-                  key={m.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 12px',
-                    background: paymentMethod === m.id ? 'var(--bg-input)' : 'transparent',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-glass)',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    color: 'var(--text-primary)'
-                  }}
-                >
+      <form className="checkout-layout" onSubmit={handleSubmit} noValidate>
+        <div className="checkout-main">
+          <section className="panel" aria-labelledby="ship-title">
+            <h2 id="ship-title">Shipping Information</h2>
+            <div className="form-grid">
+              {FIELDS.map((f) => (
+                <div key={f.name} className={`form-group${['street'].includes(f.name) ? ' form-group--wide' : ''}`}>
+                  <label htmlFor={`co-${f.name}`}>{f.label}</label>
                   <input
-                    type="radio"
-                    name="payment"
-                    value={m.id}
-                    checked={paymentMethod === m.id}
-                    onChange={() => setPaymentMethod(m.id)}
+                    id={`co-${f.name}`}
+                    className={`form-control${fieldErrors[f.name] ? ' has-error' : ''}`}
+                    type={f.type}
+                    name={f.name}
+                    value={form[f.name]}
+                    onChange={handleChange}
+                    autoComplete={f.autoComplete}
+                    aria-invalid={fieldErrors[f.name] ? 'true' : undefined}
+                    aria-describedby={fieldErrors[f.name] ? `co-${f.name}-err` : undefined}
                   />
-                  {m.label}
-                </label>
+                  {fieldErrors[f.name] && (
+                    <span id={`co-${f.name}-err`} className="field-error">
+                      {fieldErrors[f.name]}
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div style={{ background: 'var(--bg-surface)', padding: '20px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-glass)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '16px' }}>
-              <span>Total Payment:</span>
-              <span style={{ color: 'var(--neon-green-bright)' }}>{formatPrice(grandTotal)}</span>
+          <section className="panel" aria-labelledby="pay-title">
+            <h2 id="pay-title">Payment Method</h2>
+            <div className="pay-options" role="radiogroup" aria-labelledby="pay-title">
+              <label className={`pay-option${paymentMethod === 'COD' ? ' is-selected' : ''}`}>
+                <input type="radio" name="payment" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
+                <span>
+                  <strong>Cash on Delivery</strong>
+                  <small>Pay in cash when your order arrives.</small>
+                </span>
+              </label>
+              <label className={`pay-option${paymentMethod === 'CARD' ? ' is-selected' : ''}`}>
+                <input type="radio" name="payment" value="CARD" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} />
+                <span>
+                  <strong>Credit / Debit Card (Test mode)</strong>
+                  <small>Simulated payment for testing.</small>
+                </span>
+              </label>
             </div>
-            <button type="submit" className="add-to-cart-btn" style={{ padding: '14px', fontSize: '14px' }}>
-              Confirm &amp; Pay Order ➔
-            </button>
-          </div>
+            {paymentMethod === 'CARD' && (
+              <p className="notice notice--info" role="note">
+                Test mode: no real payment is processed and no card details are collected or stored. Your order will be marked as paid.
+              </p>
+            )}
+          </section>
         </div>
+
+        <aside className="summary-card" aria-label="Order summary">
+          <h2>Order Summary</h2>
+
+          {error ? (
+            <div className="notice notice--error" role="alert">
+              <AlertIcon size={18} /> <span>{error}</span>
+              <button type="button" className="link-btn" onClick={refresh}>
+                Try again
+              </button>
+            </div>
+          ) : !quote ? (
+            <LoadingSpinner size="sm" label="Calculating totals..." />
+          ) : (
+            <>
+              <ul className="summary-items">
+                {quote.items.map((line) => (
+                  <li key={line.productId}>
+                    <span className="summary-items__img">{line.image ? <img src={line.image} alt="" /> : <ImageIcon size={22} />}</span>
+                    <span className="summary-items__name">
+                      {line.name}
+                      <small>
+                        Qty {line.quantity}
+                        {line.issue ? ` – ${line.issue === 'insufficient_stock' ? `only ${line.stock} left` : line.issue === 'out_of_stock' ? 'out of stock' : 'unavailable'}` : ''}
+                      </small>
+                    </span>
+                    <span>{formatPrice(line.lineTotal)}</span>
+                  </li>
+                ))}
+              </ul>
+              <dl className="totals">
+                <div>
+                  <dt>Subtotal</dt>
+                  <dd>{formatPrice(quote.itemsPrice)}</dd>
+                </div>
+                {quote.discountPrice > 0 && (
+                  <div className="totals__discount">
+                    <dt>Discount ({quote.promo.code})</dt>
+                    <dd>-{formatPrice(quote.discountPrice)}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Shipping</dt>
+                  <dd>{quote.shippingPrice === 0 ? 'Free' : formatPrice(quote.shippingPrice)}</dd>
+                </div>
+                <div className="totals__grand">
+                  <dt>Total</dt>
+                  <dd data-testid="checkout-total">{formatPrice(quote.totalPrice)}</dd>
+                </div>
+              </dl>
+            </>
+          )}
+
+          {formError && (
+            <p className="error-msg" role="alert">
+              {formError}
+            </p>
+          )}
+          {quote && !quote.canCheckout && (
+            <p className="error-msg">
+              Some items are unavailable. <Link to="/cart">Review your cart</Link>.
+            </p>
+          )}
+
+          <button type="submit" className="btn btn-primary btn-block pdp-btn" disabled={submitting || loading || !quote || !quote.canCheckout}>
+            {submitting ? 'Placing order...' : 'Place Order'}
+          </button>
+          <Link to="/cart" className="btn btn-outline btn-block">
+            Back to Cart
+          </Link>
+        </aside>
       </form>
     </div>
   );

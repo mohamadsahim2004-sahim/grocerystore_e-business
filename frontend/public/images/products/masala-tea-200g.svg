@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img"><ellipse cx="200" cy="372" rx="105" ry="12" fill="#16261d" opacity=".12"/>
+<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#2f6fb4"/><stop offset="1" stop-color="#1d4a7e"/></linearGradient></defs>
+<path d="M96 96l40-22h188l-32 22z" fill="#c9891f"/>
+<path d="M296 96l28-22v264l-28 30z" fill="#1d4a7e"/>
+<rect x="96" y="96" width="200" height="268" rx="4" fill="url(#g)"/>
+<path d="M112 110v240" stroke="#fff" stroke-opacity=".2" stroke-width="8" stroke-linecap="round"/>
+<rect x="116" y="150" width="160" height="150" rx="12" fill="#fffdf8"/><text x="196.0" y="176" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="3" fill="#1d4a7e">EXOTIC</text><rect x="178.0" y="184" width="36" height="3" rx="1.5" fill="#c9891f"/><text x="196.0" y="260" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="800" fill="#1d4a7e">Masala Tea</text><text x="196.0" y="284" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#c9891f">200 g</text>
+<circle cx="196" cy="326" r="14" fill="#fffdf8" opacity=".9"/><path d="M190 326h12M196 320v12" stroke="#1d4a7e" stroke-width="2.5" stroke-linecap="round"/></svg>

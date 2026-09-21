@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img"><ellipse cx="200" cy="372" rx="105" ry="12" fill="#16261d" opacity=".12"/>
+<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#f6e7b4"/><stop offset="1" stop-color="#dcc27a"/></linearGradient></defs>
+<rect x="172" y="40" width="56" height="34" rx="6" fill="#3aa24f"/>
+<rect x="178" y="70" width="44" height="34" fill="url(#g)"/>
+<path d="M178 100c-40 14-66 34-66 66v168c0 18 14 32 32 32h112c18 0 32-14 32-32V166c0-32-26-52-66-66z" fill="url(#g)"/>
+<path d="M134 176v150" stroke="#fff" stroke-opacity=".35" stroke-width="9" stroke-linecap="round"/>
+<rect x="142" y="190" width="116" height="130" rx="12" fill="#fffdf8"/><text x="200.0" y="216" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="3" fill="#dcc27a">EXOTIC</text><rect x="182.0" y="224" width="36" height="3" rx="1.5" fill="#7a5a12"/><text x="200.0" y="280" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800" fill="#4a3510">Coconut Oil</text><text x="200.0" y="304" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#7a5a12">1 L</text></svg>

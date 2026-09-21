@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img"><ellipse cx="200" cy="372" rx="105" ry="12" fill="#16261d" opacity=".12"/>
+<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#e9772b"/><stop offset="1" stop-color="#b8501a"/></linearGradient></defs>
+<path d="M104 96h192l12 22v226a16 16 0 0 1-16 16H108a16 16 0 0 1-16-16V118z" fill="url(#g)"/>
+<rect x="98" y="84" width="204" height="24" rx="5" fill="#b8501a"/>
+<path d="M104 92h192M104 100h192" stroke="#fff" stroke-opacity=".25" stroke-width="2" stroke-dasharray="3 5"/>
+<path d="M120 120v230" stroke="#fff" stroke-opacity=".18" stroke-width="10" stroke-linecap="round"/>
+<rect x="128" y="176" width="144" height="136" rx="12" fill="#fffdf8"/><text x="200.0" y="202" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="3" fill="#b8501a">EXOTIC</text><rect x="182.0" y="210" width="36" height="3" rx="1.5" fill="#b8501a"/><text x="200.0" y="272" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="800" fill="#b8501a">Red Lentils</text><text x="200.0" y="296" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#b8501a">1 kg</text></svg>

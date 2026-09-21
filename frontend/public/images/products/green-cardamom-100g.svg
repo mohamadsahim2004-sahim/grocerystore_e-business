@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img"><ellipse cx="200" cy="372" rx="105" ry="12" fill="#16261d" opacity=".12"/>
+<defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#6fae4b"/><stop offset="1" stop-color="#3f7a2a"/></linearGradient></defs>
+<rect x="128" y="78" width="144" height="34" rx="8" fill="#c9a227"/>
+<rect x="128" y="100" width="144" height="8" fill="#000" opacity=".12"/>
+<path d="M136 112h128c14 0 26 12 26 26v190c0 18-14 32-32 32H142c-18 0-32-14-32-32V138c0-14 12-26 26-26z" fill="url(#g)"/>
+<path d="M132 130v190" stroke="#fff" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/>
+<rect x="140" y="178" width="120" height="128" rx="12" fill="#fffdf8"/><text x="200.0" y="204" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="3" fill="#3f7a2a">EXOTIC</text><rect x="182.0" y="212" width="36" height="3" rx="1.5" fill="#2f6a1c"/><text x="200.0" y="266" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="21" font-weight="800" fill="#3f7a2a">Cardamom</text><text x="200.0" y="290" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" fill="#2f6a1c">100 g</text></svg>

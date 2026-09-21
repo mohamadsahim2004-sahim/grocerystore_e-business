@@ -1,26 +1,75 @@
-import React, { useContext } from 'react';
-import { StoreContext } from '../context/StoreContext';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import BrandLogo from './BrandLogo';
+import { PhoneIcon, MailIcon, PinIcon, SOCIAL_ICONS } from './Icons';
+import useStoreNav from '../hooks/useStoreNav';
+import { NAV_LINKS, CUSTOMER_SERVICE_LINKS, CONTACT_INFO, SOCIAL_LINKS, TAGLINE } from '../config/siteConfig';
 
 export default function Footer() {
-  const { setInfoModal } = useContext(StoreContext);
+  const { getLinkProps } = useStoreNav();
 
   return (
-    <footer className="site-footer" style={{ padding: '24px 0', borderTop: '1px solid var(--border-glass)', marginTop: '40px', background: 'var(--bg-surface)' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap', fontSize: '12px', fontWeight: 'bold' }}>
-        <button onClick={() => setInfoModal('faq')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>FAQ</button>
-        <span style={{ color: 'var(--text-muted)' }}>•</span>
-        <button onClick={() => setInfoModal('shipping')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>SHIPPING INFO (GERMANY)</button>
-        <span style={{ color: 'var(--text-muted)' }}>•</span>
-        <button onClick={() => setInfoModal('impressum')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>IMPRESSUM</button>
-        <span style={{ color: 'var(--text-muted)' }}>•</span>
-        <button onClick={() => setInfoModal('privacy')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>PRIVACY POLICY</button>
-        <span style={{ color: 'var(--text-muted)' }}>•</span>
-        <button onClick={() => setInfoModal('contact')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>CONTACT</button>
-        <span style={{ color: 'var(--text-muted)' }}>•</span>
-        <button onClick={() => setInfoModal('about')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>ABOUT</button>
+    <footer className="site-footer">
+      <div className="container footer-grid">
+        <div className="footer-brand">
+          <BrandLogo variant="wordmark" tone="dark" />
+          <p className="footer-tagline">{TAGLINE}</p>
+        </div>
+
+        <nav className="footer-col" aria-label="Quick links">
+          <h3>Quick Links</h3>
+          <ul>
+            {NAV_LINKS.map((link) => (
+              <li key={link.label}>
+                <Link {...getLinkProps(link)}>{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <nav className="footer-col" aria-label="Customer service">
+          <h3>Customer Service</h3>
+          <ul>
+            {CUSTOMER_SERVICE_LINKS.map((link) => (
+              <li key={link.label}>
+                <Link to={link.to}>{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="footer-col footer-contact-col">
+          <h3>Contact</h3>
+          <ul className="footer-contact">
+            <li>
+              <PhoneIcon size={16} />
+              <a href={CONTACT_INFO.phoneHref}>{CONTACT_INFO.phone}</a>
+            </li>
+            <li>
+              <MailIcon size={16} />
+              <a href={`mailto:${CONTACT_INFO.email}`}>{CONTACT_INFO.email}</a>
+            </li>
+            <li>
+              <PinIcon size={16} />
+              <span>{CONTACT_INFO.address}</span>
+            </li>
+          </ul>
+
+          <div className="footer-social" aria-label="Follow us">
+            {SOCIAL_LINKS.map(({ label, href, icon }) => {
+              const SocialIcon = SOCIAL_ICONS[icon];
+              return (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label}>
+                  {SocialIcon && <SocialIcon size={18} />}
+                </a>
+              );
+            })}
+          </div>
+        </div>
       </div>
-      <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: 'var(--text-muted)' }}>
-        © {new Date().getFullYear()} Exotic Grocery Store GmbH. All rights reserved.
+
+      <div className="footer-bottom">
+        <div className="container">&copy; {new Date().getFullYear()} EXOTIC Food Market. All rights reserved.</div>
       </div>
     </footer>
   );
