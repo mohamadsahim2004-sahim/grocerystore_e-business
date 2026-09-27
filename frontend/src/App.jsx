@@ -16,17 +16,19 @@ import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import OrderHistoryPage from './pages/OrderHistoryPage';
 import WishListPage from './pages/WishListPage';
 import Profile from './pages/Profile';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import PlaceholderPage from './pages/PlaceholderPage';
+import OrderSuccessPage from './pages/OrderSuccessPage';
+import OrderHistoryPage from './pages/OrderHistoryPage';
+import OrderDetailPage from './pages/OrderDetailPage';
 
 // Shared UI
 import LoadingSpinner from './components/LoadingSpinner';
+import AccountLayout from './components/AccountLayout';
 import { PLACEHOLDER_ROUTES } from './config/siteConfig';
 
 // Legacy state page "products" now lives at the real /shop route
@@ -54,8 +56,6 @@ function MainApp() {
     switch (currentPage) {
       case 'products':
         return <RedirectToShop />;
-      case 'wishlist':
-        return <WishListPage />;
       case 'home':
       default:
         return <HomePage />;
@@ -75,7 +75,6 @@ function MainApp() {
           <Route path="/products" element={<Navigate to="/shop" replace />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/wishlist" element={<WishListPage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
@@ -88,8 +87,56 @@ function MainApp() {
           <Route element={<ProtectedRoute />}>
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-success/:id" element={<OrderSuccessPage />} />
-            <Route path="/orders" element={<OrderHistoryPage />} />
-            <Route path="/profile" element={<Profile />} />
+
+            {/* My Account: shared sidebar navigation (Profile, Orders, Wishlist, Addresses, Settings) */}
+            <Route
+              path="/profile"
+              element={
+                <AccountLayout>
+                  <Profile />
+                </AccountLayout>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <AccountLayout>
+                  <OrderHistoryPage />
+                </AccountLayout>
+              }
+            />
+            <Route
+              path="/orders/:id"
+              element={
+                <AccountLayout>
+                  <OrderDetailPage />
+                </AccountLayout>
+              }
+            />
+            <Route
+              path="/wishlist"
+              element={
+                <AccountLayout>
+                  <WishListPage />
+                </AccountLayout>
+              }
+            />
+            <Route
+              path="/addresses"
+              element={
+                <AccountLayout>
+                  <PlaceholderPage title="Addresses" bare />
+                </AccountLayout>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <AccountLayout>
+                  <PlaceholderPage title="Settings" bare />
+                </AccountLayout>
+              }
+            />
           </Route>
 
           {/* Admin Routes (Requires Login + admin role) */}

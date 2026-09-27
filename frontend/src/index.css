@@ -3036,3 +3036,240 @@ textarea.form-control {
     width: 100%;
   }
 }
+/* ==========================================================================
+   My Account (Profile, Orders, Wishlist, Addresses, Settings)
+   ========================================================================== */
+.account {
+  padding-top: 20px;
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.account-sidebar {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.account-sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.account-sidebar__user strong {
+  display: block;
+  font-size: 14px;
+}
+
+.account-sidebar__user span {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-500);
+  overflow-wrap: anywhere;
+}
+
+.account-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  background: var(--green-100);
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--green-800);
+}
+
+.account-avatar--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+}
+
+.account-nav {
+  padding: 8px;
+}
+
+.account-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink-700);
+}
+
+.account-nav__link svg {
+  flex: 0 0 auto;
+  color: var(--ink-500);
+}
+
+.account-nav__link:hover {
+  background: var(--green-50);
+  color: var(--green-800);
+}
+
+.account-nav__link.is-active {
+  background: var(--green-100);
+  color: var(--green-800);
+}
+
+.account-nav__link.is-active svg {
+  color: var(--green-700);
+}
+
+.account-nav__link--logout {
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--danger);
+}
+
+.account-nav__link--logout svg {
+  color: var(--danger);
+}
+
+.account-nav__link--logout:hover {
+  background: #fdeeee;
+}
+
+.account-content {
+  min-width: 0;
+}
+
+.account-panel {
+  padding: 24px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.account-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.account-panel__head .page-title {
+  margin-bottom: 2px;
+}
+
+.account-panel__email {
+  font-size: 14px;
+  color: var(--ink-500);
+}
+
+.account-panel__lead {
+  margin: -8px 0 20px;
+  color: var(--ink-500);
+  font-size: 14px;
+}
+
+.form-static-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.form-static-value {
+  margin-top: 6px;
+  color: var(--ink-900);
+}
+
+.profile-form__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.order-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 20px;
+}
+
+.order-card__details {
+  display: inline-flex;
+  width: auto;
+  margin-top: 14px;
+  padding: 8px 16px;
+  min-height: 38px;
+  font-size: 13px;
+}
+
+@media (max-width: 992px) {
+  .account-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-sidebar {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 5;
+  }
+
+  .account-sidebar__user {
+    display: none;
+  }
+
+  .account-nav {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    overflow-x: auto;
+  }
+
+  .account-nav__link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .account-nav__link--logout {
+    margin-top: 0;
+    border-top: 0;
+    border-left: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .account-panel {
+    padding: 18px;
+  }
+
+  .account-panel__head {
+    gap: 12px;
+  }
+
+  .profile-form__actions {
+    flex-direction: column;
+  }
+
+  .profile-form__actions .btn {
+    width: 100%;
+  }
+
+  .order-detail-head {
+    flex-direction: column;
+  }
+}

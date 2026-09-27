@@ -27,7 +27,7 @@ export default function OrderHistoryPage() {
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   return (
-    <div className="container page-section orders">
+    <div className="account-panel">
       <h1 className="page-title">Order History</h1>
 
       {state.status === 'loading' && <LoadingSpinner label="Loading your orders..." />}
@@ -67,6 +67,9 @@ export default function OrderHistoryPage() {
                 <span>Total</span>
                 <strong>{formatPrice(order.totalPrice)}</strong>
               </div>
+              <Link to={`/orders/${order._id}`} className="btn btn-outline order-card__details">
+                View Details
+              </Link>
             </li>
           ))}
         </ul>

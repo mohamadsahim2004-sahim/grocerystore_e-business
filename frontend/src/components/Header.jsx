@@ -8,7 +8,7 @@ import { UserIcon, CartIcon, MenuIcon, CloseIcon } from './Icons';
 import useStoreNav from '../hooks/useStoreNav';
 import { NAV_LINKS } from '../config/siteConfig';
 
-function AccountMenu({ user, isAdmin, onLogout, storeLinkProps }) {
+function AccountMenu({ user, isAdmin, onLogout }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
   const { pathname } = useLocation();
@@ -32,8 +32,6 @@ function AccountMenu({ user, isAdmin, onLogout, storeLinkProps }) {
       document.removeEventListener('keydown', handleKey);
     };
   }, [open]);
-
-  const wishlistProps = storeLinkProps('wishlist');
 
   return (
     <div className="account-menu" ref={wrapperRef}>
@@ -60,15 +58,14 @@ function AccountMenu({ user, isAdmin, onLogout, storeLinkProps }) {
           <Link to="/orders" role="menuitem" onClick={() => setOpen(false)}>
             Order History
           </Link>
-          <Link
-            {...wishlistProps}
-            role="menuitem"
-            onClick={() => {
-              wishlistProps.onClick();
-              setOpen(false);
-            }}
-          >
+          <Link to="/wishlist" role="menuitem" onClick={() => setOpen(false)}>
             Wishlist
+          </Link>
+          <Link to="/addresses" role="menuitem" onClick={() => setOpen(false)}>
+            Addresses
+          </Link>
+          <Link to="/settings" role="menuitem" onClick={() => setOpen(false)}>
+            Settings
           </Link>
           {isAdmin && (
             <Link to="/admin" role="menuitem" onClick={() => setOpen(false)}>
@@ -85,7 +82,7 @@ function AccountMenu({ user, isAdmin, onLogout, storeLinkProps }) {
 }
 
 export default function Header() {
-  const { cart, searchQuery, setSearchQuery, showShop } = useContext(StoreContext);
+  const { cart, searchQuery } = useContext(StoreContext);
   const { user, isAdmin, logout } = useContext(AuthContext);
   const { pathname } = useLocation();
   const { isActive, getLinkProps, storeLinkProps, searchShop } = useStoreNav();
@@ -174,7 +171,7 @@ export default function Header() {
 
         <div className="header-actions">
           {user ? (
-            <AccountMenu user={user} isAdmin={isAdmin} onLogout={handleLogout} storeLinkProps={storeLinkProps} />
+            <AccountMenu user={user} isAdmin={isAdmin} onLogout={handleLogout} />
           ) : (
             <Link to="/login" className="icon-btn" aria-label="Login or register" title="Login / Register">
               <UserIcon size={22} />

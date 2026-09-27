@@ -1,5 +1,7 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { initialProducts } from '../data/Products';
+import { AuthContext } from './AuthContext';
+import api, { getErrorMessage } from '../api/client';
 
 export const StoreContext = createContext();
 
@@ -26,6 +28,7 @@ const toCartItem = (item) => {
 const maxFor = (item) => (typeof item.stock === 'number' ? Math.max(0, Math.min(item.stock, MAX_QTY)) : MAX_QTY);
 
 export const StoreProvider = ({ children }) => {
+  const { user } = useContext(AuthContext);
   const [products] = useState(initialProducts);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,7 +62,9 @@ export const StoreProvider = ({ children }) => {
     }
   });
 
-  // Wishlist State with localStorage Persistence
+  // Wishlist: a guest's wishlist lives in localStorage. Once signed in, the server
+  // (GET/POST/DELETE /api/wishlist, backed by real Product references on the User) is the
+  // source of truth, so it is never written back to localStorage while authenticated.
   const [wishlist, setWishlist] = useState(() => {
     try {
       const savedWishlist = localStorage.getItem('exotic_wishlist');
@@ -69,6 +74,10 @@ export const StoreProvider = ({ children }) => {
       return [];
     }
   });
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [wishlistError, setWishlistError] = useState('');
+  const [wishlistAttempt, setWishlistAttempt] = useState(0);
+  const mergedGuestWishlist = useRef(false);
 
   // App Navigation & Filters State
   const [currentPage, setCurrentPage] = useState('home');
@@ -109,14 +118,65 @@ export const StoreProvider = ({ children }) => {
     }
   }, [promoCode]);
 
-  // Sync Wishlist to LocalStorage
+  // Sync Wishlist to LocalStorage (guests only)
   useEffect(() => {
+    if (user) return;
     try {
       localStorage.setItem('exotic_wishlist', JSON.stringify(wishlist));
     } catch (error) {
       console.error('Failed to save wishlist to localStorage:', error);
     }
-  }, [wishlist]);
+  }, [wishlist, user]);
+
+  // On login: merge any guest wishlist into the account once, then load the real wishlist
+  // from the server. On logout: fall back to whatever is left in the guest wishlist.
+  useEffect(() => {
+    if (!user) {
+      mergedGuestWishlist.current = false;
+      setWishlistError('');
+      try {
+        const saved = JSON.parse(localStorage.getItem('exotic_wishlist') || '[]');
+        setWishlist(Array.isArray(saved) ? saved : []);
+      } catch {
+        setWishlist([]);
+      }
+      return undefined;
+    }
+
+    let cancelled = false;
+    setWishlistLoading(true);
+    setWishlistError('');
+
+    (async () => {
+      try {
+        if (!mergedGuestWishlist.current) {
+          mergedGuestWishlist.current = true;
+          let guestItems = [];
+          try {
+            guestItems = JSON.parse(localStorage.getItem('exotic_wishlist') || '[]');
+          } catch {
+            guestItems = [];
+          }
+          if (Array.isArray(guestItems) && guestItems.length > 0) {
+            await Promise.allSettled(guestItems.map((item) => api.post(`/wishlist/${item.id}`)));
+            localStorage.removeItem('exotic_wishlist');
+          }
+        }
+        const { data } = await api.get('/wishlist');
+        if (!cancelled) setWishlist(data.map((p) => ({ ...p, id: p.id || p._id })));
+      } catch (error) {
+        if (!cancelled) setWishlistError(getErrorMessage(error, 'Could not load your wishlist.'));
+      } finally {
+        if (!cancelled) setWishlistLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, wishlistAttempt]);
+
+  const reloadWishlist = useCallback(() => setWishlistAttempt((n) => n + 1), []);
 
   // Add product to cart (or increase quantity if already in cart). Quantity is a whole number
   // between 1 and min(stock, 99); anything above that is capped.
@@ -165,15 +225,27 @@ export const StoreProvider = ({ children }) => {
     setPromoCode('');
   };
 
-  // Toggle Wishlist item presence
-  const toggleWishlist = (product) => {
-    setWishlist((prevWishlist) => {
-      const exists = prevWishlist.some((item) => item.id === product.id);
-      if (exists) {
-        return prevWishlist.filter((item) => item.id !== product.id);
-      }
-      return [...prevWishlist, product];
-    });
+  // Toggle Wishlist item presence. Signed-in users are saved to the server (optimistic,
+  // reverted if the request fails); guests are saved to localStorage only.
+  const toggleWishlist = async (product) => {
+    const exists = wishlist.some((item) => item.id === product.id);
+    setWishlist((prevWishlist) =>
+      exists ? prevWishlist.filter((item) => item.id !== product.id) : [...prevWishlist, product]
+    );
+
+    if (!user) return;
+
+    try {
+      setWishlistError('');
+      if (exists) await api.delete(`/wishlist/${product.id}`);
+      else await api.post(`/wishlist/${product.id}`);
+    } catch (error) {
+      // Roll back the optimistic update
+      setWishlist((prevWishlist) =>
+        exists ? [...prevWishlist, product] : prevWishlist.filter((item) => item.id !== product.id)
+      );
+      setWishlistError(getErrorMessage(error, 'Could not update your wishlist.'));
+    }
   };
 
   // Currency Formatter
@@ -199,6 +271,9 @@ export const StoreProvider = ({ children }) => {
         setPromoCode,
         wishlist,
         toggleWishlist,
+        wishlistLoading,
+        wishlistError,
+        reloadWishlist,
         currentPage,
         setCurrentPage,
         searchQuery,

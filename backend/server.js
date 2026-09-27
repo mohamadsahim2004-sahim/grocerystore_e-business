@@ -9,6 +9,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const wishlistRoutes = require('./routes/wishlistRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use(notFound);

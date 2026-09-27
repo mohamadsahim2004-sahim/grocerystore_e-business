@@ -161,33 +161,6 @@ export const AlertIcon = (p) => (
   </Icon>
 );
 
-export const CheckCircleIcon = (p) => (
-  <Icon {...p}>
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="7.5 12.5 10.5 15.5 16.5 9" />
-  </Icon>
-);
-
-export const TrashIcon = (p) => (
-  <Icon {...p}>
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-    <path d="M10 11v6M14 11v6" />
-    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-  </Icon>
-);
-
-export const FilterIcon = (p) => (
-  <Icon {...p}>
-    <line x1="4" y1="6" x2="20" y2="6" />
-    <line x1="4" y1="12" x2="20" y2="12" />
-    <line x1="4" y1="18" x2="20" y2="18" />
-    <circle cx="9" cy="6" r="2" fill="currentColor" />
-    <circle cx="15" cy="12" r="2" fill="currentColor" />
-    <circle cx="8" cy="18" r="2" fill="currentColor" />
-  </Icon>
-);
-
 /* Category icons */
 export const GrainIcon = (p) => (
   <Icon {...p}>
@@ -284,6 +257,57 @@ export const LockIcon = (p) => (
     <rect x="4.5" y="10.5" width="15" height="10.5" rx="2.2" />
     <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
     <line x1="12" y1="14.5" x2="12" y2="17" />
+  </Icon>
+);
+
+export const FilterIcon = (p) => (
+  <Icon {...p}>
+    <line x1="4" y1="6" x2="20" y2="6" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="18" x2="20" y2="18" />
+    <circle cx="9" cy="6" r="2" fill="currentColor" />
+    <circle cx="15" cy="12" r="2" fill="currentColor" />
+    <circle cx="8" cy="18" r="2" fill="currentColor" />
+  </Icon>
+);
+
+export const CheckCircleIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="7.5 12.5 10.5 15.5 16.5 9" />
+  </Icon>
+);
+
+export const TrashIcon = (p) => (
+  <Icon {...p}>
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <path d="M10 11v6M14 11v6" />
+    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+  </Icon>
+);
+
+export const PackageIcon = (p) => (
+  <Icon {...p}>
+    <path d="M21 8.5 12 4 3 8.5v7L12 20l9-4.5z" />
+    <path d="M3 8.5 12 13l9-4.5" />
+    <path d="M12 13v7" />
+    <path d="M7 6.2 16 10.7" />
+  </Icon>
+);
+
+export const SettingsIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V19.6a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H4.4a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.04 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H10.5a1.7 1.7 0 0 0 1.04-1.56V4.4a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V10.5a1.7 1.7 0 0 0 1.56 1.04h.09a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z" />
+  </Icon>
+);
+
+export const LogoutIcon = (p) => (
+  <Icon {...p}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
   </Icon>
 );
 
