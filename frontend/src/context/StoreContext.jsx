@@ -1,11 +1,12 @@
 import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { AuthContext } from './AuthContext';
 import api, { getErrorMessage } from '../api/client';
+import { DEFAULT_LANGUAGE, LANGUAGE_STORAGE_KEY, isSupportedLanguage, translate } from '../i18n/translations';
+import { DEFAULT_CURRENCY, CURRENCY_STORAGE_KEY, isSupportedCurrency, formatMoney } from '../config/currency';
 
 export const StoreContext = createContext();
 
 const MAX_QTY = 99;
-const CURRENCY = 'USD';
 
 // Keeps only what the cart UI needs; drops anything malformed
 const toCartItem = (item) => {
@@ -41,6 +42,52 @@ export const StoreProvider = ({ children }) => {
       return [];
     }
   });
+
+  // Interface language (UI text only). Persisted in localStorage so it survives a refresh.
+  const [language, setLanguageState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      return isSupportedLanguage(saved) ? saved : DEFAULT_LANGUAGE;
+    } catch {
+      return DEFAULT_LANGUAGE;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
+
+  const setLanguage = useCallback((code) => {
+    if (!isSupportedLanguage(code)) return;
+    setLanguageState(code);
+    try {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+    } catch {
+      /* storage unavailable: the choice still applies for this session */
+    }
+  }, []);
+
+  const t = useCallback((text, vars) => translate(language, text, vars), [language]);
+
+  // Display currency (prices in the database/API stay in the base currency; see config/currency.js)
+  const [currency, setCurrencyState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CURRENCY_STORAGE_KEY);
+      return isSupportedCurrency(saved) ? saved : DEFAULT_CURRENCY;
+    } catch {
+      return DEFAULT_CURRENCY;
+    }
+  });
+
+  const setCurrency = useCallback((code) => {
+    if (!isSupportedCurrency(code)) return;
+    setCurrencyState(code);
+    try {
+      localStorage.setItem(CURRENCY_STORAGE_KEY, code);
+    } catch {
+      /* storage unavailable: the choice still applies for this session */
+    }
+  }, []);
 
   // Promo code entered on the cart page (validated and applied by the server)
   const [promoCode, setPromoCode] = useState(() => {
@@ -226,13 +273,8 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
-  // Currency Formatter
-  const formatPrice = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: CURRENCY
-    }).format(amount);
-  };
+  // Currency Formatter: `amount` is always in the base currency; it is converted for display only
+  const formatPrice = (amount) => formatMoney(amount, currency);
 
   return (
     <StoreContext.Provider
@@ -254,7 +296,12 @@ export const StoreProvider = ({ children }) => {
         setCurrentPage,
         searchQuery,
         setSearchQuery,
-        formatPrice
+        formatPrice,
+        language,
+        setLanguage,
+        t,
+        currency,
+        setCurrency
       }}
     >
       {children}

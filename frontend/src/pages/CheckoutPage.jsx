@@ -4,6 +4,7 @@ import { StoreContext } from '../context/StoreContext';
 import { AuthContext } from '../context/AuthContext';
 import api, { getErrorMessage } from '../api/client';
 import EmptyState from '../components/EmptyState';
+import CurrencyNotice from '../components/CurrencyNotice';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { ImageIcon, AlertIcon } from '../components/Icons';
 import useCartQuote from '../hooks/useCartQuote';
@@ -233,6 +234,7 @@ export default function CheckoutPage() {
                   <dd data-testid="checkout-total">{formatPrice(quote.totalPrice)}</dd>
                 </div>
               </dl>
+              <CurrencyNotice amount={quote.totalPrice} />
             </>
           )}
 

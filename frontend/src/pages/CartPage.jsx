@@ -4,6 +4,7 @@ import { StoreContext } from '../context/StoreContext';
 import { AuthContext } from '../context/AuthContext';
 import QuantityControl from '../components/QuantityControl';
 import EmptyState from '../components/EmptyState';
+import CurrencyNotice from '../components/CurrencyNotice';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { ImageIcon, TrashIcon, CartIcon, AlertIcon } from '../components/Icons';
 import useCartQuote from '../hooks/useCartQuote';
@@ -203,6 +204,7 @@ export default function CartPage() {
             </dl>
           )}
 
+          {quote && <CurrencyNotice amount={quote.totalPrice} />}
           {freeShippingGap > 0 && <p className="totals__hint">Add {formatPrice(freeShippingGap)} more for free shipping.</p>}
           {quote && quote.issues.length > 0 && <p className="error-msg">Remove unavailable items to continue.</p>}
 

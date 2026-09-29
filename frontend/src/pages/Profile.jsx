@@ -80,6 +80,7 @@ export default function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!editing || saving) return;
     setStatus({ type: '', text: '' });
 
     const errors = validate(formData);
@@ -193,15 +194,15 @@ export default function Profile() {
         <div className="profile-form__actions">
           {editing ? (
             <>
-              <button type="submit" className="btn btn-primary" disabled={fetching || saving}>
+              <button key="save" type="submit" className="btn btn-primary" disabled={fetching || saving}>
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <button type="button" className="btn btn-outline" onClick={handleCancel} disabled={saving}>
+              <button key="cancel" type="button" className="btn btn-outline" onClick={handleCancel} disabled={saving}>
                 Cancel
               </button>
             </>
           ) : (
-            <button type="button" className="btn btn-primary" onClick={handleEdit} disabled={fetching}>
+            <button key="edit" type="button" className="btn btn-primary" onClick={handleEdit} disabled={fetching}>
               Edit Profile
             </button>
           )}

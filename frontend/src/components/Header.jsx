@@ -12,6 +12,7 @@ function AccountMenu({ user, isAdmin, onLogout }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
   const { pathname } = useLocation();
+  const { t } = useContext(StoreContext);
 
   useEffect(() => {
     setOpen(false);
@@ -38,7 +39,7 @@ function AccountMenu({ user, isAdmin, onLogout }) {
       <button
         type="button"
         className="icon-btn"
-        aria-label={`Account menu for ${user.name}`}
+        aria-label={t('Account menu for {name}', { name: user.name })}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -53,27 +54,27 @@ function AccountMenu({ user, isAdmin, onLogout }) {
             <span>{user.email}</span>
           </div>
           <Link to="/profile" role="menuitem" onClick={() => setOpen(false)}>
-            My Profile
+            {t('My Profile')}
           </Link>
           <Link to="/orders" role="menuitem" onClick={() => setOpen(false)}>
-            Order History
+            {t('Order History')}
           </Link>
           <Link to="/wishlist" role="menuitem" onClick={() => setOpen(false)}>
-            Wishlist
+            {t('Wishlist')}
           </Link>
           <Link to="/addresses" role="menuitem" onClick={() => setOpen(false)}>
-            Addresses
+            {t('Addresses')}
           </Link>
           <Link to="/settings" role="menuitem" onClick={() => setOpen(false)}>
-            Settings
+            {t('Settings')}
           </Link>
           {isAdmin && (
             <Link to="/admin" role="menuitem" onClick={() => setOpen(false)}>
-              Admin Dashboard
+              {t('Admin Dashboard')}
             </Link>
           )}
           <button type="button" role="menuitem" onClick={onLogout}>
-            Logout
+            {t('Logout')}
           </button>
         </div>
       )}
@@ -82,7 +83,7 @@ function AccountMenu({ user, isAdmin, onLogout }) {
 }
 
 export default function Header() {
-  const { cart, searchQuery } = useContext(StoreContext);
+  const { cart, searchQuery, t } = useContext(StoreContext);
   const { user, isAdmin, logout } = useContext(AuthContext);
   const { pathname } = useLocation();
   const { isActive, getLinkProps, storeLinkProps, searchShop } = useStoreNav();
@@ -121,7 +122,7 @@ export default function Header() {
         <button
           type="button"
           className="icon-btn menu-toggle"
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-label={menuOpen ? t('Close menu') : t('Open menu')}
           aria-expanded={menuOpen}
           aria-controls="primary-nav"
           onClick={() => setMenuOpen((v) => !v)}
@@ -142,10 +143,10 @@ export default function Header() {
           value={searchQuery}
           onChange={searchShop}
           onSubmit={searchShop}
-          placeholder="Search for products..."
+          placeholder={t('Search for products...')}
         />
 
-        <nav className={`primary-nav${menuOpen ? ' is-open' : ''}`} id="primary-nav" aria-label="Primary">
+        <nav className={`primary-nav${menuOpen ? ' is-open' : ''}`} id="primary-nav" aria-label={t('Primary')}>
           <ul>
             {NAV_LINKS.map((link) => {
               const linkProps = getLinkProps(link);
@@ -161,7 +162,7 @@ export default function Header() {
                       setMenuOpen(false);
                     }}
                   >
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 </li>
               );
@@ -173,7 +174,7 @@ export default function Header() {
           {user ? (
             <AccountMenu user={user} isAdmin={isAdmin} onLogout={handleLogout} />
           ) : (
-            <Link to="/login" className="icon-btn" aria-label="Login or register" title="Login / Register">
+            <Link to="/login" className="icon-btn" aria-label={t('Login or register')} title={t('Login / Register')}>
               <UserIcon size={22} />
             </Link>
           )}
@@ -181,8 +182,8 @@ export default function Header() {
           <Link
             {...cartProps}
             className="icon-btn"
-            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}
-            title="Cart"
+            aria-label={t(cartCount === 1 ? 'Cart, {count} item' : 'Cart, {count} items', { count: cartCount })}
+            title={t('Cart')}
           >
             <CartIcon size={22} />
             {cartCount > 0 && (
