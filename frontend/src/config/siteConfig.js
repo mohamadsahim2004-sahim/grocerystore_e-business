@@ -1,5 +1,6 @@
-// Shared brand/navigation content used by Header and Footer.
+// src/config/siteConfig.js
 
+// Shared brand/navigation content used by Header and Footer
 export const TAGLINE = 'Authentic & Global Flavors';
 
 // Primary navigation links used across header and mobile menus
@@ -22,7 +23,18 @@ export const CONTACT_INFO = {
   phone: '+94 77 123 4567',
   phoneHref: 'tel:+94771234567',
   email: 'info@exoticmarket.com',
-  address: 'Colombo, Sri Lanka'
+  address: '123 Main Street, Colombo, Sri Lanka'
+};
+
+export const SHIPPING_INFO = {
+  freeDeliveryThreshold: 50,
+  standardFee: 5.00,
+  estimatedDelivery: '1 - 3 Business Days'
+};
+
+export const RETURNS_POLICY = {
+  returnWindowDays: 7,
+  condition: 'Items must be unopened and in original packaging.'
 };
 
 export const SOCIAL_LINKS = [
@@ -32,7 +44,8 @@ export const SOCIAL_LINKS = [
   { label: 'YouTube', href: 'https://www.youtube.com', icon: 'youtube' }
 ];
 
-// Routes that do not have a dedicated page implementation yet; they render a placeholder so links never dead-end.
+// Routes that do not have a dedicated page implementation yet;
+// they render a placeholder so links never dead-end.
 export const PLACEHOLDER_ROUTES = [
   { path: '/contact', title: 'Contact Us' },
   { path: '/help', title: 'Help & FAQ' },

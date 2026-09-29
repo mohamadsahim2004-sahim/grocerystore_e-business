@@ -12,6 +12,7 @@ import AdminProducts from './components/AdminProducts';
 import AdminProductForm from './components/AdminProductForm';
 import AdminCategories from './components/AdminCategories';
 import AdminLayout from './components/AdminLayout';
+import ScrollToTop from './components/ScrollToTop';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -31,6 +32,13 @@ import AdminUsers from './pages/AdminUser';
 import AdminUserDetail from './pages/AdminUserDetail';
 import AdminInventory from './pages/AdminInventory';
 import PlaceholderPage from './pages/PlaceholderPage';
+import AddressesPage from './pages/AddressesPage';
+import SettingsPage from './pages/SettingsPage';
+import ShippingPage from './pages/ShippingPage';
+import HelpPage from './pages/HelpPage';
+import FaqPage from './pages/FaqPage';
+import PrivacyPage from './pages/PrivacyPage';
+import ContactPage from './pages/ContactPage';
 import CategoriesPage from './pages/CategoriesPage';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -40,11 +48,11 @@ import OrderDetailPage from './pages/OrderDetailPage';
 
 // Shared UI
 import AccountLayout from './components/AccountLayout';
-import { PLACEHOLDER_ROUTES } from './config/siteConfig';
 
 function MainApp() {
   return (
     <div className="app-root">
+      <ScrollToTop />
       <Header />
 
       <main className="site-main">
@@ -61,10 +69,12 @@ function MainApp() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Pages built in later phases */}
-          {PLACEHOLDER_ROUTES.map(({ path, title }) => (
-            <Route key={path} path={path} element={<PlaceholderPage title={title} />} />
-          ))}
+          {/* Information pages (linked from the footer) */}
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/faq" element={<FaqPage />} />
+          <Route path="/shipping" element={<ShippingPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
 
           {/* Protected Routes (Requires Login) */}
           <Route element={<ProtectedRoute />}>
@@ -108,7 +118,7 @@ function MainApp() {
               path="/addresses"
               element={
                 <AccountLayout>
-                  <PlaceholderPage title="Addresses" bare />
+                  <AddressesPage />
                 </AccountLayout>
               }
             />
@@ -116,7 +126,7 @@ function MainApp() {
               path="/settings"
               element={
                 <AccountLayout>
-                  <PlaceholderPage title="Settings" bare />
+                  <SettingsPage />
                 </AccountLayout>
               }
             />

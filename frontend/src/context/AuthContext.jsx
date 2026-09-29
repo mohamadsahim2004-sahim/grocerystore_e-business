@@ -98,6 +98,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Keep the signed-in user's saved addresses (used by Checkout, Settings) in step with the Addresses page
+  const syncAddresses = useCallback((addresses) => {
+    setUser((prev) => (prev ? { ...prev, addresses } : prev));
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -108,9 +113,10 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       fetchProfile,
-      updateProfile
+      updateProfile,
+      syncAddresses
     }),
-    [user, loading, register, login, logout, fetchProfile, updateProfile]
+    [user, loading, register, login, logout, fetchProfile, updateProfile, syncAddresses]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
