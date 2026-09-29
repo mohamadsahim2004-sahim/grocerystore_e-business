@@ -5,7 +5,8 @@ const Product = require('../models/Product');
 
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find({});
+        // Deactivated (soft-deleted) products are admin-only; the storefront never lists them
+    const products = await Product.find({ isActive: { $ne: false } });
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });

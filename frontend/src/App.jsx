@@ -1,14 +1,17 @@
-import React, { useContext, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 // Providers & Context
-import { StoreProvider, StoreContext } from './context/StoreContext';
+import { StoreProvider } from './context/StoreContext';
 import { AuthProvider } from './context/AuthContext';
 
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminProducts from './components/AdminProducts';
+import AdminProductForm from './components/AdminProductForm';
+import AdminCategories from './components/AdminCategories';
+import AdminLayout from './components/AdminLayout';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -21,47 +24,25 @@ import Profile from './pages/Profile';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminCategoryForm from './pages/AdminCategoryForm';
+import AdminOrders from './pages/AdminOrders';
+import AdminOrderDetail from './pages/AdminOrderDetail';
+import AdminUsers from './pages/AdminUser';
+import AdminUserDetail from './pages/AdminUserDetail';
+import AdminInventory from './pages/AdminInventory';
 import PlaceholderPage from './pages/PlaceholderPage';
+import CategoriesPage from './pages/CategoriesPage';
+import AboutPage from './pages/AboutPage';
+import NotFoundPage from './pages/NotFoundPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 
 // Shared UI
-import LoadingSpinner from './components/LoadingSpinner';
 import AccountLayout from './components/AccountLayout';
 import { PLACEHOLDER_ROUTES } from './config/siteConfig';
 
-// Legacy state page "products" now lives at the real /shop route
-function RedirectToShop() {
-  const { setCurrentPage } = useContext(StoreContext);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    setCurrentPage('home');
-    navigate('/shop', { replace: true });
-  }, [setCurrentPage, navigate]);
-
-  return null;
-}
-
 function MainApp() {
-  const { isLoading, currentPage } = useContext(StoreContext);
-
-  if (isLoading) {
-    return <LoadingSpinner fullPage size="lg" label="Loading EXOTIC Food Market..." />;
-  }
-
-  // Store pages are state-driven and rendered at "/"
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'products':
-        return <RedirectToShop />;
-      case 'home':
-      default:
-        return <HomePage />;
-    }
-  };
-
   return (
     <div className="app-root">
       <Header />
@@ -69,12 +50,14 @@ function MainApp() {
       <main className="site-main">
         <Routes>
           {/* Public Store & Auth Routes */}
-          <Route path="/" element={renderPage()} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<ProductsPage />} />
           <Route path="/shop/:categorySlug" element={<ProductsPage />} />
           <Route path="/products" element={<Navigate to="/shop" replace />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
@@ -88,7 +71,7 @@ function MainApp() {
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-success/:id" element={<OrderSuccessPage />} />
 
-            {/* My Account: shared sidebar navigation (Profile, Orders, Wishlist, Addresses, Settings) */}
+            {/* My Account: shared sidebar navigation */}
             <Route
               path="/profile"
               element={
@@ -141,11 +124,114 @@ function MainApp() {
 
           {/* Admin Routes (Requires Login + admin role) */}
           <Route element={<ProtectedRoute adminOnly />}>
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route
+              path="/admin"
+              element={
+                <AdminLayout>
+                  <AdminDashboard />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/products"
+              element={
+                <AdminLayout>
+                  <AdminProducts />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/products/new"
+              element={
+                <AdminLayout>
+                  <AdminProductForm />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/products/:id/edit"
+              element={
+                <AdminLayout>
+                  <AdminProductForm />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/categories"
+              element={
+                <AdminLayout>
+                  <AdminCategories />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/categories/new"
+              element={
+                <AdminLayout>
+                  <AdminCategoryForm />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/categories/:id/edit"
+              element={
+                <AdminLayout>
+                  <AdminCategoryForm />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <AdminLayout>
+                  <AdminOrders />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/orders/:id"
+              element={
+                <AdminLayout>
+                  <AdminOrderDetail />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminLayout>
+                  <AdminUsers />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/users/:id"
+              element={
+                <AdminLayout>
+                  <AdminUserDetail />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/inventory"
+              element={
+                <AdminLayout>
+                  <AdminInventory />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <AdminLayout>
+                  <PlaceholderPage title="Admin Settings" bare />
+                </AdminLayout>
+              }
+            />
           </Route>
 
           {/* Catch-all Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
 

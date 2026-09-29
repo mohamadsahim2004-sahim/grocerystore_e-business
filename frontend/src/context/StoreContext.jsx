@@ -1,11 +1,11 @@
 import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
-import { initialProducts } from '../data/Products';
 import { AuthContext } from './AuthContext';
 import api, { getErrorMessage } from '../api/client';
 
 export const StoreContext = createContext();
 
 const MAX_QTY = 99;
+const CURRENCY = 'USD';
 
 // Keeps only what the cart UI needs; drops anything malformed
 const toCartItem = (item) => {
@@ -29,17 +29,6 @@ const maxFor = (item) => (typeof item.stock === 'number' ? Math.max(0, Math.min(
 
 export const StoreProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
-  const [products] = useState(initialProducts);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simulate loading delay for app startup
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Cart State with localStorage Persistence (guest cart). Only a display snapshot is kept:
   // the server re-prices every item, so nothing stored here is trusted for money.
@@ -79,25 +68,12 @@ export const StoreProvider = ({ children }) => {
   const [wishlistAttempt, setWishlistAttempt] = useState(0);
   const mergedGuestWishlist = useRef(false);
 
+  // True while `wishlist` holds a signed-in user's server wishlist; never write it to the guest localStorage copy
+  const wishlistIsAccountOwned = useRef(false);
+
   // App Navigation & Filters State
   const [currentPage, setCurrentPage] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const [showOnlySpecials, setShowOnlySpecials] = useState(false);
-
-  // App Settings
-  const [settings, setSettings] = useState({
-    theme: 'dark',
-    currency: 'USD',
-    language: 'EN'
-  });
-
-  // Modals Visibility
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [infoModal, setInfoModal] = useState({ isOpen: false, title: '', content: '' });
 
   // Sync Cart to LocalStorage
   useEffect(() => {
@@ -120,7 +96,7 @@ export const StoreProvider = ({ children }) => {
 
   // Sync Wishlist to LocalStorage (guests only)
   useEffect(() => {
-    if (user) return;
+    if (user || wishlistIsAccountOwned.current) return;
     try {
       localStorage.setItem('exotic_wishlist', JSON.stringify(wishlist));
     } catch (error) {
@@ -132,6 +108,7 @@ export const StoreProvider = ({ children }) => {
   // from the server. On logout: fall back to whatever is left in the guest wishlist.
   useEffect(() => {
     if (!user) {
+      wishlistIsAccountOwned.current = false;
       mergedGuestWishlist.current = false;
       setWishlistError('');
       try {
@@ -144,6 +121,7 @@ export const StoreProvider = ({ children }) => {
     }
 
     let cancelled = false;
+    wishlistIsAccountOwned.current = true;
     setWishlistLoading(true);
     setWishlistError('');
 
@@ -233,7 +211,7 @@ export const StoreProvider = ({ children }) => {
       exists ? prevWishlist.filter((item) => item.id !== product.id) : [...prevWishlist, product]
     );
 
-    if (!user) return;
+    if (!user && !wishlistIsAccountOwned.current) return;
 
     try {
       setWishlistError('');
@@ -252,15 +230,13 @@ export const StoreProvider = ({ children }) => {
   const formatPrice = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: settings.currency || 'USD'
+      currency: CURRENCY
     }).format(amount);
   };
 
   return (
     <StoreContext.Provider
       value={{
-        isLoading,
-        products,
         cart,
         setCart,
         addToCart,
@@ -278,23 +254,7 @@ export const StoreProvider = ({ children }) => {
         setCurrentPage,
         searchQuery,
         setSearchQuery,
-        selectedCategory,
-        setSelectedCategory,
-        showOnlySpecials,
-        setShowOnlySpecials,
-        settings,
-        setSettings,
-        formatPrice,
-        isCartOpen,
-        setIsCartOpen,
-        isWishlistOpen,
-        setIsWishlistOpen,
-        isProfileOpen,
-        setIsProfileOpen,
-        isSettingsOpen,
-        setIsSettingsOpen,
-        infoModal,
-        setInfoModal
+        formatPrice
       }}
     >
       {children}

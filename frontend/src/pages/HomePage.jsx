@@ -5,15 +5,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 import useFeaturedProducts from '../hooks/useFeaturedProducts';
 import heroArt from '../assets/hero-produce.svg';
+import CategoryTiles from '../components/CategoryTiles';
 import {
-  GrainIcon,
-  FruitVegIcon,
-  SpiceIcon,
-  SnackIcon,
-  BeverageIcon,
-  HouseholdIcon,
-  FrozenIcon,
-  OilIcon,
   ShieldCheckIcon,
   TruckIcon,
   LockIcon,
@@ -21,17 +14,6 @@ import {
   AlertIcon
 } from '../components/Icons';
 import { TAGLINE } from '../config/siteConfig';
-
-const CATEGORIES = [
-  { label: 'Rice & Grains', slug: 'rice-grains', Icon: GrainIcon },
-  { label: 'Fruits & Vegetables', slug: 'fruits-vegetables', Icon: FruitVegIcon },
-  { label: 'Spices & Herbs', slug: 'spices-herbs', Icon: SpiceIcon },
-  { label: 'Snacks & Sweets', slug: 'snacks-sweets', Icon: SnackIcon },
-  { label: 'Beverages', slug: 'beverages', Icon: BeverageIcon },
-  { label: 'Household & Care', slug: 'household-care', Icon: HouseholdIcon },
-  { label: 'Frozen Foods', slug: 'frozen-foods', Icon: FrozenIcon },
-  { label: 'Oils & Ghee', slug: 'oils-ghee', Icon: OilIcon }
-];
 
 const TRUST_ITEMS = [
   { title: 'Fresh & Quality Products', text: 'Hand-picked and carefully sourced', Icon: ShieldCheckIcon },
@@ -94,18 +76,7 @@ export default function HomePage() {
         <h2 id="home-categories-title" className="sr-only">
           Shop by category
         </h2>
-        <ul className="category-grid">
-          {CATEGORIES.map(({ label, slug, Icon }) => (
-            <li key={label}>
-              <Link to={`/shop/${slug}`} className="category-tile">
-                <span className="category-tile__icon">
-                  <Icon size={30} />
-                </span>
-                <span className="category-tile__label">{label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <CategoryTiles hideWhenEmpty />
       </section>
 
       {/* Featured products (GET /api/products) */}

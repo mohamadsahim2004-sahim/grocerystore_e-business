@@ -2,10 +2,11 @@
 
 export const TAGLINE = 'Authentic & Global Flavors';
 
-// `page` links are store pages rendered at "/" (state-driven); the rest are real routes.
+// Primary navigation links used across header and mobile menus
 export const NAV_LINKS = [
   { label: 'Home', to: '/', page: 'home' },
-  { label: 'Shop', to: '/shop' },     // was { label: 'Shop', to: '/', page: 'products' }  { label: 'Categories', to: '/categories' },
+  { label: 'Shop', to: '/shop' },
+  { label: 'Categories', to: '/categories' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' }
 ];
@@ -31,10 +32,8 @@ export const SOCIAL_LINKS = [
   { label: 'YouTube', href: 'https://www.youtube.com', icon: 'youtube' }
 ];
 
-// Routes that do not have a page yet; they render a placeholder so links never dead-end.
+// Routes that do not have a dedicated page implementation yet; they render a placeholder so links never dead-end.
 export const PLACEHOLDER_ROUTES = [
-  { path: '/categories', title: 'Categories' },
-  { path: '/about', title: 'About EXOTIC' },
   { path: '/contact', title: 'Contact Us' },
   { path: '/help', title: 'Help & FAQ' },
   { path: '/shipping', title: 'Shipping' },

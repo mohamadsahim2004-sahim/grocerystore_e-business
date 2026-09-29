@@ -310,7 +310,38 @@ export const LogoutIcon = (p) => (
     <line x1="21" y1="12" x2="9" y2="12" />
   </Icon>
 );
+export const GridIcon = (p) => (
+  <Icon {...p}>
+    <rect x="3" y="3" width="8" height="8" rx="1.5" />
+    <rect x="13" y="3" width="8" height="8" rx="1.5" />
+    <rect x="3" y="13" width="8" height="8" rx="1.5" />
+    <rect x="13" y="13" width="8" height="8" rx="1.5" />
+  </Icon>
+);
 
+export const TagIcon = (p) => (
+  <Icon {...p}>
+    <path d="M20.5 12.5 12.9 20.1a2 2 0 0 1-2.83 0L3.5 13.5a2 2 0 0 1 0-2.83L11.1 3.1a2 2 0 0 1 1.42-.6H19a1.5 1.5 0 0 1 1.5 1.5v6.87a2 2 0 0 1-.6 1.42z" />
+    <circle cx="15.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
+export const UsersIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="9" cy="8" r="3.2" />
+    <path d="M2.5 20c0-3.6 2.9-6.2 6.5-6.2s6.5 2.6 6.5 6.2" />
+    <path d="M16 4.3a3.2 3.2 0 0 1 0 6.2" />
+    <path d="M17.5 13.9c2.7.5 4 2.6 4 6.1" />
+  </Icon>
+);
+
+export const LayersIcon = (p) => (
+  <Icon {...p}>
+    <polygon points="12 3 21 8 12 13 3 8 12 3" />
+    <polyline points="3 13 12 18 21 13" />
+    <polyline points="3 17.5 12 22.5 21 17.5" />
+  </Icon>
+);
 export const SOCIAL_ICONS = {
   facebook: FacebookIcon,
   instagram: InstagramIcon,

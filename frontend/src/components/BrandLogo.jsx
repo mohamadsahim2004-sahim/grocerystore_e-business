@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import logoFull from '../assets/logo/exotic-logo.png';
-import logoFullWhite from '../assets/logo/exotic-logo-white.png';
 import wordmark from '../assets/logo/exotic-wordmark.png';
 import wordmarkWhite from '../assets/logo/exotic-wordmark-white.png';
+import logoFull from '../assets/logo/exotic-logo.png';
+import logoFullWhite from '../assets/logo/exotic-logo-white.png';
 
 const SOURCES = {
   wordmark: {
