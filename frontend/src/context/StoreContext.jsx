@@ -1,18 +1,49 @@
-import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback
+} from 'react';
+
 import { AuthContext } from './AuthContext';
 import api, { getErrorMessage } from '../api/client';
-import { DEFAULT_LANGUAGE, LANGUAGE_STORAGE_KEY, isSupportedLanguage, translate } from '../i18n/translations';
-import { DEFAULT_CURRENCY, CURRENCY_STORAGE_KEY, isSupportedCurrency, formatMoney } from '../config/currency';
 
-export const StoreContext = createContext();
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGE_STORAGE_KEY,
+  isSupportedLanguage,
+  translate
+} from '../i18n/translations';
+
+import {
+  DEFAULT_CURRENCY,
+  CURRENCY_STORAGE_KEY,
+  isSupportedCurrency,
+  formatMoney
+} from '../config/currency';
+
+export const StoreContext = createContext(null);
 
 const MAX_QTY = 99;
 
-// Keeps only what the cart UI needs; drops anything malformed
+// Keeps only what the cart UI needs.
 const toCartItem = (item) => {
-  if (!item || typeof item.id !== 'string' || !/^[a-f\d]{24}$/i.test(item.id)) return null;
+  if (
+    !item ||
+    typeof item.id !== 'string' ||
+    !/^[a-f\d]{24}$/i.test(item.id)
+  ) {
+    return null;
+  }
+
   const quantity = Math.floor(Number(item.quantity));
-  if (!Number.isFinite(quantity) || quantity < 1) return null;
+
+  if (!Number.isFinite(quantity) || quantity < 1) {
+    return null;
+  }
+
   return {
     id: item.id,
     name: String(item.name || ''),
@@ -25,29 +56,52 @@ const toCartItem = (item) => {
   };
 };
 
-// Highest quantity allowed for an item (known stock, never above MAX_QTY)
-const maxFor = (item) => (typeof item.stock === 'number' ? Math.max(0, Math.min(item.stock, MAX_QTY)) : MAX_QTY);
+// Highest quantity allowed for an item.
+const maxFor = (item) => {
+  if (typeof item.stock === 'number') {
+    return Math.max(0, Math.min(item.stock, MAX_QTY));
+  }
+
+  return MAX_QTY;
+};
 
 export const StoreProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
 
-  // Cart State with localStorage Persistence (guest cart). Only a display snapshot is kept:
-  // the server re-prices every item, so nothing stored here is trusted for money.
+  // -------------------------
+  // CART
+  // -------------------------
+
   const [cart, setCart] = useState(() => {
     try {
-      const savedCart = JSON.parse(localStorage.getItem('exotic_cart') || '[]');
-      return Array.isArray(savedCart) ? savedCart.map(toCartItem).filter(Boolean) : [];
+      const savedCart = JSON.parse(
+        localStorage.getItem('exotic_cart') || '[]'
+      );
+
+      return Array.isArray(savedCart)
+        ? savedCart.map(toCartItem).filter(Boolean)
+        : [];
     } catch (error) {
-      console.error('Failed to parse cart from localStorage:', error);
+      console.error(
+        'Failed to parse cart from localStorage:',
+        error
+      );
+
       return [];
     }
   });
 
-  // Interface language (UI text only). Persisted in localStorage so it survives a refresh.
+  // -------------------------
+  // LANGUAGE
+  // -------------------------
+
   const [language, setLanguageState] = useState(() => {
     try {
       const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      return isSupportedLanguage(saved) ? saved : DEFAULT_LANGUAGE;
+
+      return isSupportedLanguage(saved)
+        ? saved
+        : DEFAULT_LANGUAGE;
     } catch {
       return DEFAULT_LANGUAGE;
     }
@@ -58,38 +112,72 @@ export const StoreProvider = ({ children }) => {
   }, [language]);
 
   const setLanguage = useCallback((code) => {
-    if (!isSupportedLanguage(code)) return;
+    if (!isSupportedLanguage(code)) {
+      return;
+    }
+
     setLanguageState(code);
+
     try {
       localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
     } catch {
-      /* storage unavailable: the choice still applies for this session */
+      // Storage unavailable.
     }
   }, []);
 
-  const t = useCallback((text, vars) => translate(language, text, vars), [language]);
+  const t = useCallback(
+    (text, vars) => translate(language, text, vars),
+    [language]
+  );
 
-  // Display currency (prices in the database/API stay in the base currency; see config/currency.js)
+  // -------------------------
+  // CURRENCY
+  // -------------------------
+
   const [currency, setCurrencyState] = useState(() => {
     try {
       const saved = localStorage.getItem(CURRENCY_STORAGE_KEY);
-      return isSupportedCurrency(saved) ? saved : DEFAULT_CURRENCY;
+
+      return isSupportedCurrency(saved)
+        ? saved
+        : DEFAULT_CURRENCY;
     } catch {
       return DEFAULT_CURRENCY;
     }
   });
 
   const setCurrency = useCallback((code) => {
-    if (!isSupportedCurrency(code)) return;
+    if (!isSupportedCurrency(code)) {
+      return;
+    }
+
     setCurrencyState(code);
+
     try {
       localStorage.setItem(CURRENCY_STORAGE_KEY, code);
     } catch {
-      /* storage unavailable: the choice still applies for this session */
+      // Storage unavailable.
     }
   }, []);
 
-  // Promo code entered on the cart page (validated and applied by the server)
+  // Always expose a real function.
+  const formatPrice = useCallback(
+    (amount) => {
+      const numericAmount = Number(amount);
+
+      if (!Number.isFinite(numericAmount)) {
+        return formatMoney(0, currency);
+      }
+
+      return formatMoney(numericAmount, currency);
+    },
+    [currency]
+  );
+
+  // -------------------------
+  // PROMO CODE
+  // -------------------------
+
   const [promoCode, setPromoCode] = useState(() => {
     try {
       return localStorage.getItem('exotic_promo') || '';
@@ -98,77 +186,139 @@ export const StoreProvider = ({ children }) => {
     }
   });
 
-  // Wishlist: a guest's wishlist lives in localStorage. Once signed in, the server
-  // (GET/POST/DELETE /api/wishlist, backed by real Product references on the User) is the
-  // source of truth, so it is never written back to localStorage while authenticated.
+  // -------------------------
+  // WISHLIST
+  // -------------------------
+
   const [wishlist, setWishlist] = useState(() => {
     try {
-      const savedWishlist = localStorage.getItem('exotic_wishlist');
-      return savedWishlist ? JSON.parse(savedWishlist) : [];
+      const savedWishlist = localStorage.getItem(
+        'exotic_wishlist'
+      );
+
+      return savedWishlist
+        ? JSON.parse(savedWishlist)
+        : [];
     } catch (error) {
-      console.error('Failed to parse wishlist from localStorage:', error);
+      console.error(
+        'Failed to parse wishlist from localStorage:',
+        error
+      );
+
       return [];
     }
   });
-  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  const [wishlistLoading, setWishlistLoading] =
+    useState(false);
+
   const [wishlistError, setWishlistError] = useState('');
-  const [wishlistAttempt, setWishlistAttempt] = useState(0);
+
+  const [wishlistAttempt, setWishlistAttempt] =
+    useState(0);
+
   const mergedGuestWishlist = useRef(false);
 
-  // True while `wishlist` holds a signed-in user's server wishlist; never write it to the guest localStorage copy
   const wishlistIsAccountOwned = useRef(false);
 
-  // App Navigation & Filters State
-  const [currentPage, setCurrentPage] = useState('home');
-  const [searchQuery, setSearchQuery] = useState('');
+  // -------------------------
+  // NAVIGATION / SEARCH
+  // -------------------------
 
-  // Sync Cart to LocalStorage
+  const [currentPage, setCurrentPage] =
+    useState('home');
+
+  const [searchQuery, setSearchQuery] =
+    useState('');
+
+  // -------------------------
+  // LOCAL STORAGE SYNC
+  // -------------------------
+
   useEffect(() => {
     try {
-      localStorage.setItem('exotic_cart', JSON.stringify(cart));
+      localStorage.setItem(
+        'exotic_cart',
+        JSON.stringify(cart)
+      );
     } catch (error) {
-      console.error('Failed to save cart to localStorage:', error);
+      console.error(
+        'Failed to save cart to localStorage:',
+        error
+      );
     }
   }, [cart]);
 
-  // Sync promo code to LocalStorage
   useEffect(() => {
     try {
-      if (promoCode) localStorage.setItem('exotic_promo', promoCode);
-      else localStorage.removeItem('exotic_promo');
+      if (promoCode) {
+        localStorage.setItem(
+          'exotic_promo',
+          promoCode
+        );
+      } else {
+        localStorage.removeItem('exotic_promo');
+      }
     } catch {
-      /* storage unavailable */
+      // Storage unavailable.
     }
   }, [promoCode]);
 
-  // Sync Wishlist to LocalStorage (guests only)
   useEffect(() => {
-    if (user || wishlistIsAccountOwned.current) return;
+    if (
+      user ||
+      wishlistIsAccountOwned.current
+    ) {
+      return;
+    }
+
     try {
-      localStorage.setItem('exotic_wishlist', JSON.stringify(wishlist));
+      localStorage.setItem(
+        'exotic_wishlist',
+        JSON.stringify(wishlist)
+      );
     } catch (error) {
-      console.error('Failed to save wishlist to localStorage:', error);
+      console.error(
+        'Failed to save wishlist to localStorage:',
+        error
+      );
     }
   }, [wishlist, user]);
 
-  // On login: merge any guest wishlist into the account once, then load the real wishlist
-  // from the server. On logout: fall back to whatever is left in the guest wishlist.
+  // -------------------------
+  // WISHLIST SERVER SYNC
+  // -------------------------
+
   useEffect(() => {
     if (!user) {
       wishlistIsAccountOwned.current = false;
       mergedGuestWishlist.current = false;
+
       setWishlistError('');
+
       try {
-        const saved = JSON.parse(localStorage.getItem('exotic_wishlist') || '[]');
-        setWishlist(Array.isArray(saved) ? saved : []);
+        const saved = JSON.parse(
+          localStorage.getItem(
+            'exotic_wishlist'
+          ) || '[]'
+        );
+
+        setWishlist(
+          Array.isArray(saved)
+            ? saved
+            : []
+        );
       } catch {
         setWishlist([]);
       }
+
       return undefined;
     }
 
     let cancelled = false;
+
     wishlistIsAccountOwned.current = true;
+
     setWishlistLoading(true);
     setWishlistError('');
 
@@ -176,23 +326,65 @@ export const StoreProvider = ({ children }) => {
       try {
         if (!mergedGuestWishlist.current) {
           mergedGuestWishlist.current = true;
+
           let guestItems = [];
+
           try {
-            guestItems = JSON.parse(localStorage.getItem('exotic_wishlist') || '[]');
+            guestItems = JSON.parse(
+              localStorage.getItem(
+                'exotic_wishlist'
+              ) || '[]'
+            );
           } catch {
             guestItems = [];
           }
-          if (Array.isArray(guestItems) && guestItems.length > 0) {
-            await Promise.allSettled(guestItems.map((item) => api.post(`/wishlist/${item.id}`)));
-            localStorage.removeItem('exotic_wishlist');
+
+          if (
+            Array.isArray(guestItems) &&
+            guestItems.length > 0
+          ) {
+            await Promise.allSettled(
+              guestItems.map((item) =>
+                api.post(
+                  `/wishlist/${item.id}`
+                )
+              )
+            );
+
+            localStorage.removeItem(
+              'exotic_wishlist'
+            );
           }
         }
-        const { data } = await api.get('/wishlist');
-        if (!cancelled) setWishlist(data.map((p) => ({ ...p, id: p.id || p._id })));
+
+        const { data } =
+          await api.get('/wishlist');
+
+        if (!cancelled) {
+          const items = Array.isArray(data)
+            ? data
+            : [];
+
+          setWishlist(
+            items.map((p) => ({
+              ...p,
+              id: p.id || p._id
+            }))
+          );
+        }
       } catch (error) {
-        if (!cancelled) setWishlistError(getErrorMessage(error, 'Could not load your wishlist.'));
+        if (!cancelled) {
+          setWishlistError(
+            getErrorMessage(
+              error,
+              'Could not load your wishlist.'
+            )
+          );
+        }
       } finally {
-        if (!cancelled) setWishlistLoading(false);
+        if (!cancelled) {
+          setWishlistLoading(false);
+        }
       }
     })();
 
@@ -201,109 +393,253 @@ export const StoreProvider = ({ children }) => {
     };
   }, [user, wishlistAttempt]);
 
-  const reloadWishlist = useCallback(() => setWishlistAttempt((n) => n + 1), []);
+  const reloadWishlist = useCallback(() => {
+    setWishlistAttempt(
+      (n) => n + 1
+    );
+  }, []);
 
-  // Add product to cart (or increase quantity if already in cart). Quantity is a whole number
-  // between 1 and min(stock, 99); anything above that is capped.
-  const addToCart = (product, qty = 1) => {
-    const wanted = Math.max(1, Math.floor(Number(qty)) || 1);
+  // -------------------------
+  // CART ACTIONS
+  // -------------------------
+
+  const addToCart = (
+    product,
+    qty = 1
+  ) => {
+    if (!product) {
+      return;
+    }
+
+    const wanted = Math.max(
+      1,
+      Math.floor(Number(qty)) || 1
+    );
+
     setCart((prevCart) => {
-      const existing = prevCart.find((item) => item.id === product.id);
+      const existing = prevCart.find(
+        (item) =>
+          item.id === product.id
+      );
+
       if (existing) {
-        const stock = typeof product.stock === 'number' ? product.stock : existing.stock;
-        const next = { ...existing, stock };
+        const stock =
+          typeof product.stock === 'number'
+            ? product.stock
+            : existing.stock;
+
+        const next = {
+          ...existing,
+          stock
+        };
+
         const cap = maxFor(next);
-        if (cap < 1) return prevCart;
-        return prevCart.map((item) =>
-          item.id === product.id ? { ...next, quantity: Math.min(item.quantity + wanted, cap) } : item
+
+        if (cap < 1) {
+          return prevCart;
+        }
+
+        return prevCart.map(
+          (item) =>
+            item.id === product.id
+              ? {
+                  ...next,
+                  quantity: Math.min(
+                    item.quantity + wanted,
+                    cap
+                  )
+                }
+              : item
         );
       }
-      const fresh = toCartItem({ ...product, quantity: 1 });
-      if (!fresh) return prevCart;
+
+      const fresh = toCartItem({
+        ...product,
+        quantity: 1
+      });
+
+      if (!fresh) {
+        return prevCart;
+      }
+
       const cap = maxFor(fresh);
-      if (cap < 1) return prevCart;
-      return [...prevCart, { ...fresh, quantity: Math.min(wanted, cap) }];
+
+      if (cap < 1) {
+        return prevCart;
+      }
+
+      return [
+        ...prevCart,
+        {
+          ...fresh,
+          quantity: Math.min(
+            wanted,
+            cap
+          )
+        }
+      ];
     });
   };
 
-  // Increment or decrement cart item quantity (never above stock, removed when it reaches 0)
-  const updateQuantity = (productId, delta) => {
+  const updateQuantity = (
+    productId,
+    delta
+  ) => {
     setCart((prevCart) =>
       prevCart
         .map((item) => {
-          if (item.id !== productId) return item;
-          const newQty = Math.min(item.quantity + Math.trunc(delta), maxFor(item));
-          return newQty > 0 ? { ...item, quantity: newQty } : null;
+          if (
+            item.id !== productId
+          ) {
+            return item;
+          }
+
+          const newQty = Math.min(
+            item.quantity +
+              Math.trunc(delta),
+            maxFor(item)
+          );
+
+          return newQty > 0
+            ? {
+                ...item,
+                quantity: newQty
+              }
+            : null;
         })
         .filter(Boolean)
     );
   };
 
-  // Remove item completely from cart
-  const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+  const removeFromCart = (
+    productId
+  ) => {
+    setCart((prevCart) =>
+      prevCart.filter(
+        (item) =>
+          item.id !== productId
+      )
+    );
   };
 
-  // Clear entire cart (and any promo code)
   const clearCart = () => {
     setCart([]);
     setPromoCode('');
   };
 
-  // Toggle Wishlist item presence. Signed-in users are saved to the server (optimistic,
-  // reverted if the request fails); guests are saved to localStorage only.
-  const toggleWishlist = async (product) => {
-    const exists = wishlist.some((item) => item.id === product.id);
-    setWishlist((prevWishlist) =>
-      exists ? prevWishlist.filter((item) => item.id !== product.id) : [...prevWishlist, product]
+  // -------------------------
+  // WISHLIST ACTION
+  // -------------------------
+
+  const toggleWishlist = async (
+    product
+  ) => {
+    if (!product) {
+      return;
+    }
+
+    const exists = wishlist.some(
+      (item) =>
+        item.id === product.id
     );
 
-    if (!user && !wishlistIsAccountOwned.current) return;
+    setWishlist(
+      (prevWishlist) =>
+        exists
+          ? prevWishlist.filter(
+              (item) =>
+                item.id !==
+                product.id
+            )
+          : [
+              ...prevWishlist,
+              product
+            ]
+    );
+
+    if (
+      !user &&
+      !wishlistIsAccountOwned.current
+    ) {
+      return;
+    }
 
     try {
       setWishlistError('');
-      if (exists) await api.delete(`/wishlist/${product.id}`);
-      else await api.post(`/wishlist/${product.id}`);
+
+      if (exists) {
+        await api.delete(
+          `/wishlist/${product.id}`
+        );
+      } else {
+        await api.post(
+          `/wishlist/${product.id}`
+        );
+      }
     } catch (error) {
-      // Roll back the optimistic update
-      setWishlist((prevWishlist) =>
-        exists ? [...prevWishlist, product] : prevWishlist.filter((item) => item.id !== product.id)
+      setWishlist(
+        (prevWishlist) =>
+          exists
+            ? [
+                ...prevWishlist,
+                product
+              ]
+            : prevWishlist.filter(
+                (item) =>
+                  item.id !==
+                  product.id
+              )
       );
-      setWishlistError(getErrorMessage(error, 'Could not update your wishlist.'));
+
+      setWishlistError(
+        getErrorMessage(
+          error,
+          'Could not update your wishlist.'
+        )
+      );
     }
   };
 
-  // Currency Formatter: `amount` is always in the base currency; it is converted for display only
-  const formatPrice = (amount) => formatMoney(amount, currency);
+  // -------------------------
+  // CONTEXT VALUE
+  // -------------------------
+
+  const value = {
+    cart,
+    setCart,
+
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+
+    promoCode,
+    setPromoCode,
+
+    wishlist,
+    toggleWishlist,
+    wishlistLoading,
+    wishlistError,
+    reloadWishlist,
+
+    currentPage,
+    setCurrentPage,
+
+    searchQuery,
+    setSearchQuery,
+
+    formatPrice,
+
+    language,
+    setLanguage,
+    t,
+
+    currency,
+    setCurrency
+  };
 
   return (
-    <StoreContext.Provider
-      value={{
-        cart,
-        setCart,
-        addToCart,
-        updateQuantity,
-        removeFromCart,
-        clearCart,
-        promoCode,
-        setPromoCode,
-        wishlist,
-        toggleWishlist,
-        wishlistLoading,
-        wishlistError,
-        reloadWishlist,
-        currentPage,
-        setCurrentPage,
-        searchQuery,
-        setSearchQuery,
-        formatPrice,
-        language,
-        setLanguage,
-        t,
-        currency,
-        setCurrency
-      }}
-    >
+    <StoreContext.Provider value={value}>
       {children}
     </StoreContext.Provider>
   );

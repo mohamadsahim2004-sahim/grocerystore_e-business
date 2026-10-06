@@ -45,6 +45,11 @@ const orderSchema = new mongoose.Schema(
     },
     isPaid: { type: Boolean, default: false },
     paidAt: { type: Date },
+    // Online (PayHere) payment tracking. Only set for paymentMethod 'CARD'; isPaid/paidAt stay the source of truth.
+    paymentStatus: { type: String, enum: ['Unpaid', 'Pending', 'Paid', 'Failed', 'Cancelled', 'Chargedback'] },
+    payherePaymentId: { type: String, default: '' },
+    payhereAmount: { type: Number, min: 0 }, // LKR amount requested from PayHere (store prices are USD)
+    payhereCurrency: { type: String, default: '' },
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
     cancelledAt: { type: Date },

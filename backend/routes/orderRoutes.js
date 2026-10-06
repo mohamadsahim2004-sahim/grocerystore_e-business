@@ -273,8 +273,10 @@ router.post(
       // The charge is copied onto the order, so later changes to province rates never touch existing orders
       shippingPrice: quote.shippingPrice,
       totalPrice: quote.totalPrice,
-      isPaid: paymentMethod === 'CARD',
-      paidAt: paymentMethod === 'CARD' ? new Date() : undefined
+      // Never paid at creation. A CARD (PayHere) order becomes paid only when PayHere's verified notification
+      // arrives (controllers/paymentController.js). COD stays unpaid until delivery, as before.
+      isPaid: false,
+      paymentStatus: paymentMethod === 'CARD' ? 'Unpaid' : undefined
     };
 
     let duplicate = false;

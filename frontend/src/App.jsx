@@ -1,20 +1,36 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Providers & Context
-import { StoreProvider } from './context/StoreContext';
-import { AuthProvider } from './context/AuthContext';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate
+} from 'react-router-dom';
+
+// Providers
+import {
+  StoreProvider
+} from './context/StoreContext';
+
+import {
+  AuthProvider
+} from './context/AuthContext';
 
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
+
 import ProtectedRoute from './components/ProtectedRoute';
+
 import AdminProducts from './components/AdminProducts';
 import AdminProductForm from './components/AdminProductForm';
 import AdminCategories from './components/AdminCategories';
 import AdminLayout from './components/AdminLayout';
+
 import ScrollToTop from './components/ScrollToTop';
 import SupportChat from './components/SupportChat';
+
+import AccountLayout from './components/AccountLayout';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -23,68 +39,194 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import WishListPage from './pages/WishListPage';
+
 import Profile from './pages/Profile';
+
 import Register from './pages/Register';
 import Login from './pages/Login';
+
 import AdminDashboard from './pages/AdminDashboard';
 import AdminCategoryForm from './pages/AdminCategoryForm';
+
 import AdminOrders from './pages/AdminOrders';
 import AdminOrderDetail from './pages/AdminOrderDetail';
+
 import AdminUsers from './pages/AdminUser';
 import AdminUserDetail from './pages/AdminUserDetail';
+
 import AdminInventory from './pages/AdminInventory';
 import AdminSupport from './pages/AdminSupport';
+
 import PlaceholderPage from './pages/PlaceholderPage';
+
 import AddressesPage from './pages/AddressesPage';
 import SettingsPage from './pages/SettingsPage';
+
 import ShippingPage from './pages/ShippingPage';
 import HelpPage from './pages/HelpPage';
 import FaqPage from './pages/FaqPage';
 import PrivacyPage from './pages/PrivacyPage';
 import ContactPage from './pages/ContactPage';
+
 import CategoriesPage from './pages/CategoriesPage';
 import AboutPage from './pages/AboutPage';
+
 import NotFoundPage from './pages/NotFoundPage';
+
 import OrderSuccessPage from './pages/OrderSuccessPage';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import OrderDetailPage from './pages/OrderDetailPage';
-
-// Shared UI
-import AccountLayout from './components/AccountLayout';
 
 function MainApp() {
   return (
     <div className="app-root">
       <ScrollToTop />
+
       <Header />
 
       <main className="site-main">
         <Routes>
-          {/* Public Store & Auth Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/shop" element={<ProductsPage />} />
-          <Route path="/shop/:categorySlug" element={<ProductsPage />} />
-          <Route path="/products" element={<Navigate to="/shop" replace />} />
-          <Route path="/products/:id" element={<ProductDetailPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/categories" element={<CategoriesPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
 
-          {/* Information pages (linked from the footer) */}
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/help" element={<HelpPage />} />
-          <Route path="/faq" element={<FaqPage />} />
-          <Route path="/shipping" element={<ShippingPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
+          {/* =========================
+              PUBLIC STORE ROUTES
+          ========================== */}
 
-          {/* Protected Routes (Requires Login) */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/order-success/:id" element={<OrderSuccessPage />} />
+          <Route
+            path="/"
+            element={<HomePage />}
+          />
 
-            {/* My Account: shared sidebar navigation */}
+          <Route
+            path="/shop"
+            element={
+              <ProductsPage />
+            }
+          />
+
+          <Route
+            path="/shop/:categorySlug"
+            element={
+              <ProductsPage />
+            }
+          />
+
+          <Route
+            path="/products"
+            element={
+              <Navigate
+                to="/shop"
+                replace
+              />
+            }
+          />
+
+          <Route
+            path="/products/:id"
+            element={
+              <ProductDetailPage />
+            }
+          />
+
+          <Route
+            path="/cart"
+            element={<CartPage />}
+          />
+
+          <Route
+            path="/categories"
+            element={
+              <CategoriesPage />
+            }
+          />
+
+          <Route
+            path="/about"
+            element={
+              <AboutPage />
+            }
+          />
+
+          <Route
+            path="/register"
+            element={
+              <Register />
+            }
+          />
+
+          <Route
+            path="/login"
+            element={
+              <Login />
+            }
+          />
+
+          {/* =========================
+              INFORMATION ROUTES
+          ========================== */}
+
+          <Route
+            path="/contact"
+            element={
+              <ContactPage />
+            }
+          />
+
+          <Route
+            path="/help"
+            element={
+              <HelpPage />
+            }
+          />
+
+          <Route
+            path="/faq"
+            element={
+              <FaqPage />
+            }
+          />
+
+          <Route
+            path="/shipping"
+            element={
+              <ShippingPage />
+            }
+          />
+
+          <Route
+            path="/privacy"
+            element={
+              <PrivacyPage />
+            }
+          />
+
+          {/* =========================
+              PROTECTED CUSTOMER ROUTES
+          ========================== */}
+
+          <Route
+            element={
+              <ProtectedRoute />
+            }
+          >
+            <Route
+              path="/checkout"
+              element={
+                <CheckoutPage />
+              }
+            />
+
+            <Route
+              path="/order-success/:id"
+              element={
+                <OrderSuccessPage />
+              }
+            />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+
+            <Route path="/payment/cancel" element={<PaymentCancel />} />
+
             <Route
               path="/profile"
               element={
@@ -93,6 +235,7 @@ function MainApp() {
                 </AccountLayout>
               }
             />
+
             <Route
               path="/orders"
               element={
@@ -101,6 +244,7 @@ function MainApp() {
                 </AccountLayout>
               }
             />
+
             <Route
               path="/orders/:id"
               element={
@@ -109,6 +253,7 @@ function MainApp() {
                 </AccountLayout>
               }
             />
+
             <Route
               path="/wishlist"
               element={
@@ -117,6 +262,7 @@ function MainApp() {
                 </AccountLayout>
               }
             />
+
             <Route
               path="/addresses"
               element={
@@ -125,6 +271,7 @@ function MainApp() {
                 </AccountLayout>
               }
             />
+
             <Route
               path="/settings"
               element={
@@ -135,8 +282,18 @@ function MainApp() {
             />
           </Route>
 
-          {/* Admin Routes (Requires Login + admin role) */}
-          <Route element={<ProtectedRoute adminOnly />}>
+          {/* =========================
+              ADMIN ROUTES
+          ========================== */}
+
+          <Route
+            element={
+              <ProtectedRoute
+                adminOnly
+              />
+            }
+          >
+
             <Route
               path="/admin"
               element={
@@ -145,6 +302,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/products"
               element={
@@ -153,6 +311,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/products/new"
               element={
@@ -161,6 +320,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/products/:id/edit"
               element={
@@ -169,6 +329,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/categories"
               element={
@@ -177,6 +338,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/categories/new"
               element={
@@ -185,6 +347,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/categories/:id/edit"
               element={
@@ -193,6 +356,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/orders"
               element={
@@ -201,6 +365,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/orders/:id"
               element={
@@ -209,6 +374,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/users"
               element={
@@ -217,6 +383,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/users/:id"
               element={
@@ -225,6 +392,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/inventory"
               element={
@@ -233,6 +401,7 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/support/:id?"
               element={
@@ -241,22 +410,37 @@ function MainApp() {
                 </AdminLayout>
               }
             />
+
             <Route
               path="/admin/settings"
               element={
                 <AdminLayout>
-                  <PlaceholderPage title="Admin Settings" bare />
+                  <PlaceholderPage
+                    title="Admin Settings"
+                    bare
+                  />
                 </AdminLayout>
               }
             />
+
           </Route>
 
-          {/* Catch-all Fallback */}
-          <Route path="*" element={<NotFoundPage />} />
+          {/* =========================
+              FALLBACK
+          ========================== */}
+
+          <Route
+            path="*"
+            element={
+              <NotFoundPage />
+            }
+          />
+
         </Routes>
       </main>
 
       <Footer />
+
       <SupportChat />
     </div>
   );

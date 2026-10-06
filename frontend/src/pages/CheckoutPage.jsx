@@ -8,6 +8,8 @@ import CurrencyNotice from '../components/CurrencyNotice';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { ImageIcon, AlertIcon } from '../components/Icons';
 import useCartQuote from '../hooks/useCartQuote';
+import { startPayHerePayment } from '../lib/payhere';
+import { formatMoney } from '../config/currency';
 
 const FIELDS = [
   { name: 'fullName', label: 'Full Name', autoComplete: 'name', type: 'text' },
@@ -64,7 +66,6 @@ export default function CheckoutPage() {
   });
   const { quote, loading, error, refresh, setQuote } = useCartQuote(cart, promoCode, form.province);
 
-  // Provinces the store delivers to (GET /api/delivery-rates, set by the admin)
   const [rates, setRates] = useState({ status: 'loading', list: [], error: '' });
   const [ratesAttempt, setRatesAttempt] = useState(0);
   useEffect(() => {
@@ -154,14 +155,31 @@ export default function CheckoutPage() {
         promoCode: promoCode || undefined,
         expectedTotal: quote.totalPrice
       });
-      navigate(`/order-success/${data.order._id}`, { replace: true });
+
+      const order = data.order;
+
+      // Online payment: order is created as UNPAID. Hand over to PayHere
+      if (paymentMethod === 'CARD' && !order.isPaid) {
+        clearCart();
+        try {
+          await startPayHerePayment(order._id);
+        } catch (payErr) {
+          navigate(`/payment/cancel?order_id=${order._id}&reason=error`, {
+            replace: true,
+            state: { message: getErrorMessage(payErr, 'We could not start the payment.') }
+          });
+        }
+        return;
+      }
+
+      // COD or auto-paid order path
       clearCart();
+      navigate(`/order-success/${order._id}`, { replace: true });
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors) setFieldErrors(data.errors);
       if (data?.quote) setQuote(data.quote);
       if (data?.code === 'PROVINCE_UNAVAILABLE') {
-        // The admin switched this province off meanwhile: reload the list and ask for another one
         setForm((prev) => ({ ...prev, province: '' }));
         setRatesAttempt((n) => n + 1);
       }
@@ -287,14 +305,14 @@ export default function CheckoutPage() {
               <label className={`pay-option${paymentMethod === 'CARD' ? ' is-selected' : ''}`}>
                 <input type="radio" name="payment" value="CARD" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} />
                 <span>
-                  <strong>Credit / Debit Card (Test mode)</strong>
-                  <small>Simulated payment for testing.</small>
+                  <strong>Credit / Debit Card (PayHere Sandbox)</strong>
+                  <small>Pay securely on PayHere's sandbox checkout page.</small>
                 </span>
               </label>
             </div>
             {paymentMethod === 'CARD' && (
               <p className="notice notice--info" role="note">
-                Test mode: no real payment is processed and no card details are stored. Your order will be marked as paid instantly.
+                Sandbox mode: you will be redirected to PayHere to pay{quote ? ` ${formatMoney(quote.totalPrice, 'LKR')}` : ''} (charged in LKR). No card details are stored here, and your order is marked as paid only after PayHere confirms the payment.
               </p>
             )}
           </section>
@@ -370,8 +388,14 @@ export default function CheckoutPage() {
             </p>
           )}
 
-          <button type="submit" className="btn btn-primary btn-block pdp-btn" disabled={submitting || loading || !quote || !quote.canCheckout || quote.shippingPending || quote.provinceUnavailable}>
-            {submitting ? 'Placing order...' : 'Place Order'}
+          <button
+            type="submit"
+            className="btn btn-primary btn-block pdp-btn"
+            disabled={submitting || loading || !quote || !quote.canCheckout || quote.shippingPending || quote.provinceUnavailable}
+          >
+            {submitting
+              ? (paymentMethod === 'CARD' ? 'Redirecting to PayHere...' : 'Placing order...')
+              : paymentMethod === 'CARD' ? 'Place Order & Pay' : 'Place Order'}
           </button>
           <Link to="/cart" className="btn btn-outline btn-block">
             Back to Cart

@@ -5,7 +5,7 @@ import api, { getErrorMessage } from '../api/client';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { ImageIcon, AlertIcon } from '../components/Icons';
-import { PAYMENT_LABELS, formatOrderDate } from '../lib/orderFormat';
+import { PAYMENT_LABELS, formatOrderDate, paymentStatusLabel } from '../lib/orderFormat';
 
 // Same transition rules the server enforces (it always re-checks)
 const ALLOWED_TRANSITIONS = {
@@ -150,8 +150,7 @@ export default function AdminOrderDetail() {
             <div>
               <dt>Payment</dt>
               <dd>
-                {PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod} &middot; {order.isPaid ? 'Paid' : 'Pay on delivery'}
-              </dd>
+                {PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod} &middot; {paymentStatusLabel(order)}              </dd>
             </div>
           </dl>
           <h3 className="panel__sub">Shipping to</h3>

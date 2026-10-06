@@ -20,6 +20,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 connectDB();
@@ -33,6 +34,8 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '')
 app.use(cors(allowedOrigins.length ? { origin: allowedOrigins } : undefined));
 
 app.use(express.json());
+// PayHere sends its payment notification as application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: false }));
 
 // Normalize empty body to prevent crashes in Express 5
 app.use((req, res, next) => {
@@ -54,6 +57,7 @@ app.use('/api/delivery-rates', deliveryRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Error Handling Middleware
 app.use(notFound);
