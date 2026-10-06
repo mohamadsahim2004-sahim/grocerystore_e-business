@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
+import { AuthContext } from '../context/AuthContext';
 import api, { getErrorMessage } from '../api/client';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -11,8 +12,14 @@ import { PAYMENT_LABELS, formatOrderDate } from '../lib/orderFormat';
 export default function OrderDetailPage() {
   const { id } = useParams();
   const { formatPrice } = useContext(StoreContext);
+  const { user } = useContext(AuthContext);
+
   const [state, setState] = useState({ status: 'loading', order: null, error: '' });
   const [attempt, setAttempt] = useState(0);
+
+  // Per product: 'review' (backend says this customer may review it), 'reviewed' (already has a review) or nothing.
+  // Only asked for Delivered orders; the review API (not this page) decides eligibility.
+  const [reviewState, setReviewState] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +38,45 @@ export default function OrderDetailPage() {
   }, [id, attempt]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
+
+  // Cancel (only offered before the order is shipped; the server enforces the same rule)
+  const [cancelStep, setCancelStep] = useState('idle'); // idle | confirm | working
+  const [cancelError, setCancelError] = useState('');
+
+  const handleCancel = async () => {
+    setCancelStep('working');
+    setCancelError('');
+    try {
+      const { data } = await api.post(`/orders/${id}/cancel`);
+      setState({ status: 'ready', order: data, error: '' });
+      setCancelStep('idle');
+    } catch (err) {
+      setCancelError(getErrorMessage(err, 'We could not cancel this order. Please try again.'));
+      setCancelStep('idle');
+      // 409 = the order changed meanwhile (shipped, or already cancelled): show its real status
+      if (err.response?.status === 409) retry();
+    }
+  };
+
+  const loadedOrder = state.status === 'ready' ? state.order : null;
+
+  useEffect(() => {
+    setReviewState({});
+    if (!loadedOrder || loadedOrder.status !== 'Delivered' || !user || String(loadedOrder.user) !== String(user._id)) return undefined;
+    let cancelled = false;
+    const ids = [...new Set(loadedOrder.orderItems.map((item) => String(item.product)))];
+    Promise.all(
+      ids.map((pid) =>
+        api
+          .get(`/products/${pid}/reviews/mine`)
+          .then(({ data }) => [pid, data.review ? 'reviewed' : data.canReview ? 'review' : null])
+          .catch(() => [pid, null]) // can't confirm -> no button
+      )
+    ).then((pairs) => !cancelled && setReviewState(Object.fromEntries(pairs)));
+    return () => {
+      cancelled = true;
+    };
+  }, [loadedOrder, user]);
 
   if (state.status === 'loading') {
     return (
@@ -56,6 +102,7 @@ export default function OrderDetailPage() {
 
   const { order } = state;
   const a = order.shippingAddress;
+  const canCancel = order.status === 'Pending' || order.status === 'Processing';
 
   return (
     <div className="account-panel">
@@ -87,6 +134,16 @@ export default function OrderDetailPage() {
                   <small>
                     Qty {item.quantity} × {formatPrice(item.price)}
                   </small>
+                  {reviewState[String(item.product)] === 'review' && (
+                    <Link to={`/products/${item.product}#reviews`} className="btn btn-outline btn-sm order-review">
+                      Rate &amp; Review
+                    </Link>
+                  )}
+                  {reviewState[String(item.product)] === 'reviewed' && (
+                    <Link to={`/products/${item.product}#reviews`} className="order-review order-review--done">
+                      &#10003; Reviewed
+                    </Link>
+                  )}
                 </span>
                 <span>{formatPrice(item.price * item.quantity)}</span>
               </li>
@@ -136,12 +193,57 @@ export default function OrderDetailPage() {
             <br />
             {a.city}, {a.postalCode}
             <br />
-            {a.country}
+            {a.province ? `${a.province} Province, ` : ''}{a.country}
             <br />
             {a.phone}
           </address>
         </section>
       </div>
+
+      {cancelError && (
+        <p className="error-msg" role="alert">
+          {cancelError}
+        </p>
+      )}
+      {canCancel && (
+        <section className="panel order-cancel" aria-labelledby="od-cancel">
+          <h2 id="od-cancel">Cancel this order</h2>
+          {cancelStep === 'idle' ? (
+            <>
+              <p>You can cancel this order until it has been shipped. The items go back into stock.</p>
+              <button type="button" className="btn btn-danger-outline" onClick={() => setCancelStep('confirm')}>
+                Cancel Order
+              </button>
+            </>
+          ) : (
+            <div role="alertdialog" aria-labelledby="od-cancel-q">
+              <p id="od-cancel-q">
+                <strong>Cancel this order?</strong> This cannot be undone.
+              </p>
+              <div className="order-cancel__actions">
+                <button type="button" className="btn btn-danger-outline" onClick={handleCancel} disabled={cancelStep === 'working'}>
+                  {cancelStep === 'working' ? 'Cancelling...' : 'Yes, cancel order'}
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setCancelStep('idle')} disabled={cancelStep === 'working'}>
+                  Keep order
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+      {order.status === 'Shipped' && (
+        <p className="notice notice--info" role="note">
+          This order has been shipped, so it can no longer be cancelled.
+        </p>
+      )}
+      {order.status === 'Cancelled' && (
+        <p className="notice notice--warn" role="status" data-testid="order-cancelled-note">
+          This order was cancelled
+          {order.cancelledAt ? ` on ${formatOrderDate(order.cancelledAt)}` : ''}
+          {order.cancelledBy === 'customer' ? ' at your request' : order.cancelledBy === 'admin' ? ' by the store' : ''}.
+        </p>
+      )}
 
       <p className="orders__back">
         <Link to="/orders">&larr; Back to Order History</Link>

@@ -26,7 +26,7 @@ async function withOrderStats(users) {
 router.get(
   '/',
   handle(async (req, res) => {
-    const users = await User.find({}).sort({ createdAt: -1 });
+    const users = await User.find({}).select('-avatar').sort({ createdAt: -1 });
     res.json(await withOrderStats(users));
   })
 );
@@ -38,7 +38,7 @@ router.get(
   '/:id',
   handle(async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.id)) throw new HttpError(404, 'User not found');
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id).select('-avatar');
     if (!user) throw new HttpError(404, 'User not found');
 
     const [[withStats], recentOrders] = await Promise.all([

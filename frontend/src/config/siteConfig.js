@@ -13,9 +13,8 @@ export const NAV_LINKS = [
 ];
 
 export const CUSTOMER_SERVICE_LINKS = [
-  { label: 'Help & FAQ', to: '/help' },
+  { label: 'Help & FAQ', to: '/faq' },
   { label: 'Shipping', to: '/shipping' },
-  { label: 'Returns', to: '/returns' },
   { label: 'Privacy Policy', to: '/privacy' }
 ];
 
@@ -27,9 +26,9 @@ export const CONTACT_INFO = {
 };
 
 export const SHIPPING_INFO = {
-  freeDeliveryThreshold: 50,
-  standardFee: 5.00,
-  estimatedDelivery: '1 - 3 Business Days'
+  flatRate: 4.9,
+  freeAbove: 49,
+  deliveryTime: 'Estimated delivery: 1 - 3 business days.'
 };
 
 export const RETURNS_POLICY = {
@@ -42,14 +41,4 @@ export const SOCIAL_LINKS = [
   { label: 'Instagram', href: 'https://www.instagram.com', icon: 'instagram' },
   { label: 'X (Twitter)', href: 'https://x.com', icon: 'x' },
   { label: 'YouTube', href: 'https://www.youtube.com', icon: 'youtube' }
-];
-
-// Routes that do not have a dedicated page implementation yet;
-// they render a placeholder so links never dead-end.
-export const PLACEHOLDER_ROUTES = [
-  { path: '/contact', title: 'Contact Us' },
-  { path: '/help', title: 'Help & FAQ' },
-  { path: '/shipping', title: 'Shipping' },
-  { path: '/returns', title: 'Returns' },
-  { path: '/privacy', title: 'Privacy Policy' }
 ];

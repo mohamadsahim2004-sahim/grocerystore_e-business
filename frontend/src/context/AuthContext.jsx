@@ -98,6 +98,27 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Profile photo: the server returns the whole updated user, so every screen shows the new photo at once
+  const updateAvatar = useCallback(async (avatar) => {
+    try {
+      const { data } = await api.put('/profile/avatar', { avatar });
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      throw toError(error);
+    }
+  }, []);
+
+  const removeAvatar = useCallback(async () => {
+    try {
+      const { data } = await api.delete('/profile/avatar');
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      throw toError(error);
+    }
+  }, []);
+
   // Keep the signed-in user's saved addresses (used by Checkout, Settings) in step with the Addresses page
   const syncAddresses = useCallback((addresses) => {
     setUser((prev) => (prev ? { ...prev, addresses } : prev));
@@ -114,9 +135,11 @@ export const AuthProvider = ({ children }) => {
       logout,
       fetchProfile,
       updateProfile,
+      updateAvatar,
+      removeAvatar,
       syncAddresses
     }),
-    [user, loading, register, login, logout, fetchProfile, updateProfile, syncAddresses]
+    [user, loading, register, login, logout, fetchProfile, updateProfile, updateAvatar, removeAvatar, syncAddresses]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

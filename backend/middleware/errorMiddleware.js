@@ -7,6 +7,17 @@ const errorHandler = (err, req, res, next) => {
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   let message = err.message || 'Server Error';
 
+  // Handle express / body-parser payload errors
+  if (err.type && Number.isInteger(err.status) && err.status >= 400 && err.status < 500) {
+    statusCode = err.status;
+    message =
+      err.type === 'entity.parse.failed'
+        ? 'Request body is not valid JSON'
+        : err.type === 'entity.too.large'
+        ? 'Request body is too large'
+        : 'Invalid request';
+  }
+
   if (err.name === 'CastError') {
     statusCode = 404;
     message = 'Resource not found';
@@ -21,9 +32,17 @@ const errorHandler = (err, req, res, next) => {
     message = `An entry with that ${field} already exists`;
   }
 
+  // Log 500+ errors and mask internal details in production
+  if (statusCode >= 500) {
+    console.error('Unhandled error:', err);
+    if (process.env.NODE_ENV !== 'development') {
+      message = 'Something went wrong. Please try again later.';
+    }
+  }
+
   res.status(statusCode).json({
     message,
-    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 };
 

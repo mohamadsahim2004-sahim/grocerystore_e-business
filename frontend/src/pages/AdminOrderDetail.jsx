@@ -7,7 +7,14 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { ImageIcon, AlertIcon } from '../components/Icons';
 import { PAYMENT_LABELS, formatOrderDate } from '../lib/orderFormat';
 
-const STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+// Same transition rules the server enforces (it always re-checks)
+const ALLOWED_TRANSITIONS = {
+  Pending: ['Processing', 'Shipped', 'Delivered', 'Cancelled'],
+  Processing: ['Shipped', 'Delivered', 'Cancelled'],
+  Shipped: ['Delivered', 'Cancelled'],
+  Delivered: [],
+  Cancelled: []
+};
 
 export default function AdminOrderDetail() {
   const { id } = useParams();
@@ -52,6 +59,8 @@ export default function AdminOrderDetail() {
       setUpdateNotice(`Status updated to ${data.status}.`);
     } catch (err) {
       setUpdateError(getErrorMessage(err, 'Could not update the status.'));
+      // 409 = the order changed meanwhile (for example the customer cancelled it): show its real state
+      if (err.response?.status === 409) retry();
     } finally {
       setUpdating(false);
     }
@@ -67,7 +76,8 @@ export default function AdminOrderDetail() {
 
   const { order } = state;
   const a = order.shippingAddress;
-  const isCancelled = order.status === 'Cancelled';
+  const allowedNext = ALLOWED_TRANSITIONS[order.status] || [];
+  const isFinal = allowedNext.length === 0;
 
   return (
     <div className="admin-page">
@@ -152,7 +162,7 @@ export default function AdminOrderDetail() {
             <br />
             {a.city}, {a.postalCode}
             <br />
-            {a.country}
+            {a.province ? `${a.province} Province, ` : ''}{a.country}
             <br />
             {a.phone}
           </address>
@@ -161,14 +171,23 @@ export default function AdminOrderDetail() {
 
       <section className="panel">
         <h2>Update Status</h2>
-        {isCancelled ? (
-          <p className="admin-empty-note">This order is cancelled and can no longer be updated.</p>
+        {order.status === 'Cancelled' && (
+          <p className="notice notice--warn" data-testid="admin-cancelled-note">
+            Cancelled{order.cancelledBy === 'customer' ? ' by the customer' : order.cancelledBy === 'admin' ? ' by an admin' : ''}
+            {order.cancelledAt ? ` on ${formatOrderDate(order.cancelledAt)}` : ''}.
+            {order.stockRestored ? ' Its items were returned to stock.' : ''}
+          </p>
+        )}
+        {isFinal ? (
+          <p className="admin-empty-note">
+            {order.status === 'Cancelled' ? 'This order is cancelled' : 'This order is delivered'} and can no longer be updated.
+          </p>
         ) : (
           <div className="status-update">
             <select className="form-control" value={nextStatus} onChange={(e) => setNextStatus(e.target.value)}>
-              {STATUSES.map((s) => (
+              {[order.status, ...allowedNext].map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {s === order.status ? `${s} (current)` : s}
                 </option>
               ))}
             </select>
@@ -177,7 +196,7 @@ export default function AdminOrderDetail() {
             </button>
           </div>
         )}
-        {nextStatus === 'Cancelled' && !isCancelled && (
+        {nextStatus === 'Cancelled' && !isFinal && (
           <p className="notice notice--warn">Cancelling this order will restore its items to stock.</p>
         )}
         {updateNotice && <p className="success-msg">{updateNotice}</p>}

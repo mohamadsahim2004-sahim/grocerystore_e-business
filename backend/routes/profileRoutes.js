@@ -111,6 +111,48 @@ router.put('/', async (req, res, next) => {
   }
 });
 
+const AVATAR_MAX_LENGTH = 70000;
+const AVATAR_PATTERN = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/;
+
+// The declared type must match the real file signature
+const hasImageSignature = (type, base64) => {
+  const head = Buffer.from(base64.slice(0, 24), 'base64');
+  if (type === 'jpeg') return head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+  if (type === 'png') return head.length >= 4 && head.readUInt32BE(0) === 0x89504e47;
+  return head.length >= 12 && head.toString('ascii', 0, 4) === 'RIFF' && head.toString('ascii', 8, 12) === 'WEBP';
+};
+
+router.put('/avatar', async (req, res, next) => {
+  try {
+    const { avatar } = req.body;
+    if (typeof avatar !== 'string' || avatar.length === 0) {
+      return res.status(400).json({ message: 'Please choose a photo' });
+    }
+    if (avatar.length > AVATAR_MAX_LENGTH) {
+      return res.status(400).json({ message: 'That photo is too large. Please choose a smaller image' });
+    }
+    const match = AVATAR_PATTERN.exec(avatar);
+    if (!match || !hasImageSignature(match[1], match[2])) {
+      return res.status(400).json({ message: 'Please choose a JPEG, PNG or WebP image' });
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.avatar = avatar;
+    await user.save();
+    res.json({ user });
+  } catch (error) { next(error); }
+});
+
+router.delete('/avatar', async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.avatar = '';
+    await user.save();
+    res.json({ user });
+  } catch (error) { next(error); }
+});
+
 // @desc    List the logged-in user's saved addresses
 // @route   GET /api/profile/addresses
 // @access  Private

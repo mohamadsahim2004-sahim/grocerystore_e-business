@@ -18,19 +18,23 @@ const FIELDS = [
   { name: 'country', label: 'Country', autoComplete: 'country-name', type: 'text' }
 ];
 
-// Same rules the server enforces (the server always re-checks)
 function validate(form) {
   const errors = {};
   const len = (v, min, max, key, label) => {
-    const t = v.trim();
-    if (t.length < min || t.length > max) errors[key] = `${label} must be between ${min} and ${max} characters`;
+    const t = (v || '').trim();
+    if (t.length < min || t.length > max) {
+      errors[key] = `${label} must be between ${min} and ${max} characters`;
+    }
   };
+
   len(form.fullName, 2, 100, 'fullName', 'Full name');
   len(form.phone, 7, 20, 'phone', 'Phone number');
   len(form.street, 3, 200, 'street', 'Address');
   len(form.city, 2, 100, 'city', 'City');
   len(form.postalCode, 2, 12, 'postalCode', 'Postal code');
   len(form.country, 2, 100, 'country', 'Country');
+  if (!form.province) errors.province = 'Select your delivery province';
+
   if (!errors.phone && (!/^[+()\-\s\d]+$/.test(form.phone.trim()) || form.phone.replace(/\D/g, '').length < 7)) {
     errors.phone = 'Enter a valid phone number';
   }
@@ -44,27 +48,67 @@ export default function CheckoutPage() {
   const { cart, clearCart, formatPrice, promoCode } = useContext(StoreContext);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const { quote, loading, error, refresh, setQuote } = useCartQuote(cart, promoCode);
 
-  const saved = user?.addresses?.find((a) => a.isDefault) || user?.addresses?.[0] || {};
+  const savedAddresses = user?.addresses || [];
+  const defaultAddress = savedAddresses.find((a) => a.isDefault) || savedAddresses[0] || {};
+
+  const [selectedAddressId, setSelectedAddressId] = useState(defaultAddress._id || 'new');
   const [form, setForm] = useState({
     fullName: user?.name || '',
     phone: user?.phone || '',
-    street: saved.street || '',
-    city: saved.city || '',
-    postalCode: saved.postalCode || '',
-    country: saved.country || 'Sri Lanka'
+    street: defaultAddress.street || '',
+    city: defaultAddress.city || '',
+    postalCode: defaultAddress.postalCode || '',
+    country: defaultAddress.country || 'Sri Lanka',
+    province: ''
   });
+  const { quote, loading, error, refresh, setQuote } = useCartQuote(cart, promoCode, form.province);
+
+  // Provinces the store delivers to (GET /api/delivery-rates, set by the admin)
+  const [rates, setRates] = useState({ status: 'loading', list: [], error: '' });
+  const [ratesAttempt, setRatesAttempt] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    setRates((prev) => ({ ...prev, status: 'loading', error: '' }));
+    api
+      .get('/delivery-rates')
+      .then(({ data }) => !cancelled && setRates({ status: 'ready', list: data.rates, error: '' }))
+      .catch((err) => !cancelled && setRates({ status: 'error', list: [], error: getErrorMessage(err, 'Could not load delivery areas.') }));
+    return () => {
+      cancelled = true;
+    };
+  }, [ratesAttempt]);
+
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Once the account finishes loading, fill any still-empty fields
   useEffect(() => {
     if (!user) return;
-    setForm((prev) => ({ ...prev, fullName: prev.fullName || user.name || '', phone: prev.phone || user.phone || '' }));
+    setForm((prev) => ({
+      ...prev,
+      fullName: prev.fullName || user.name || '',
+      phone: prev.phone || user.phone || ''
+    }));
   }, [user]);
+
+  const handleSelectAddress = (addressId) => {
+    setSelectedAddressId(addressId);
+    if (addressId === 'new') return;
+
+    const chosen = savedAddresses.find((a) => a._id === addressId);
+    if (chosen) {
+      setForm((prev) => ({
+        ...prev,
+        street: chosen.street || '',
+        city: chosen.city || '',
+        postalCode: chosen.postalCode || '',
+        country: chosen.country || 'Sri Lanka'
+      }));
+      setFieldErrors({});
+    }
+  };
 
   if (cart.length === 0) {
     return (
@@ -80,7 +124,9 @@ export default function CheckoutPage() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    if (fieldErrors[e.target.name]) setFieldErrors({ ...fieldErrors, [e.target.name]: undefined });
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: undefined });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -114,7 +160,17 @@ export default function CheckoutPage() {
       const data = err.response?.data;
       if (data?.errors) setFieldErrors(data.errors);
       if (data?.quote) setQuote(data.quote);
-      setFormError(data?.code === 'PRICE_CHANGED' ? `${data.message} New total: ${formatPrice(data.quote.totalPrice)}.` : getErrorMessage(err, 'We could not place your order.'));
+      if (data?.code === 'PROVINCE_UNAVAILABLE') {
+        // The admin switched this province off meanwhile: reload the list and ask for another one
+        setForm((prev) => ({ ...prev, province: '' }));
+        setRatesAttempt((n) => n + 1);
+      }
+
+      setFormError(
+        data?.code === 'PRICE_CHANGED'
+          ? `${data.message} New total: ${formatPrice(data.quote.totalPrice)}.`
+          : getErrorMessage(err, 'We could not place your order.')
+      );
       setSubmitting(false);
     }
   };
@@ -134,6 +190,26 @@ export default function CheckoutPage() {
         <div className="checkout-main">
           <section className="panel" aria-labelledby="ship-title">
             <h2 id="ship-title">Shipping Information</h2>
+
+            {savedAddresses.length > 0 && (
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label htmlFor="address-select">Select Saved Address</label>
+                <select
+                  id="address-select"
+                  className="form-control"
+                  value={selectedAddressId}
+                  onChange={(e) => handleSelectAddress(e.target.value)}
+                >
+                  {savedAddresses.map((addr) => (
+                    <option key={addr._id} value={addr._id}>
+                      {addr.street}, {addr.city} {addr.isDefault ? '(Default)' : ''}
+                    </option>
+                  ))}
+                  <option value="new">+ Enter a new address</option>
+                </select>
+              </div>
+            )}
+
             <div className="form-grid">
               {FIELDS.map((f) => (
                 <div key={f.name} className={`form-group${['street'].includes(f.name) ? ' form-group--wide' : ''}`}>
@@ -156,6 +232,45 @@ export default function CheckoutPage() {
                   )}
                 </div>
               ))}
+
+              <div className="form-group">
+                <label htmlFor="co-province">Delivery Province</label>
+                <select
+                  id="co-province"
+                  className={`form-control${fieldErrors.province ? ' has-error' : ''}`}
+                  name="province"
+                  value={form.province}
+                  onChange={handleChange}
+                  disabled={rates.status !== 'ready'}
+                  aria-invalid={fieldErrors.province ? 'true' : undefined}
+                  aria-describedby={fieldErrors.province ? 'co-province-err' : undefined}
+                >
+                  <option value="">
+                    {rates.status === 'loading' ? 'Loading provinces...' : 'Select a province'}
+                  </option>
+                  {rates.list.map((r) => (
+                    <option key={r.province} value={r.province}>
+                      {r.province} Province
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.province && (
+                  <span id="co-province-err" className="field-error">
+                    {fieldErrors.province}
+                  </span>
+                )}
+                {rates.status === 'error' && (
+                  <span className="field-error">
+                    {rates.error}{' '}
+                    <button type="button" className="link-btn" onClick={() => setRatesAttempt((n) => n + 1)}>
+                      Try again
+                    </button>
+                  </span>
+                )}
+                {rates.status === 'ready' && rates.list.length === 0 && (
+                  <span className="field-error">We are not delivering to any province right now.</span>
+                )}
+              </div>
             </div>
           </section>
 
@@ -179,7 +294,7 @@ export default function CheckoutPage() {
             </div>
             {paymentMethod === 'CARD' && (
               <p className="notice notice--info" role="note">
-                Test mode: no real payment is processed and no card details are collected or stored. Your order will be marked as paid.
+                Test mode: no real payment is processed and no card details are stored. Your order will be marked as paid instantly.
               </p>
             )}
           </section>
@@ -221,13 +336,19 @@ export default function CheckoutPage() {
                 </div>
                 {quote.discountPrice > 0 && (
                   <div className="totals__discount">
-                    <dt>Discount ({quote.promo.code})</dt>
+                    <dt>Discount ({quote.promo?.code})</dt>
                     <dd>-{formatPrice(quote.discountPrice)}</dd>
                   </div>
                 )}
                 <div>
                   <dt>Shipping</dt>
-                  <dd>{quote.shippingPrice === 0 ? 'Free' : formatPrice(quote.shippingPrice)}</dd>
+                  <dd>
+                    {quote.shippingPending
+                      ? 'Select a province'
+                      : quote.shippingPrice === 0
+                        ? 'Free'
+                        : formatPrice(quote.shippingPrice)}
+                  </dd>
                 </div>
                 <div className="totals__grand">
                   <dt>Total</dt>
@@ -249,7 +370,7 @@ export default function CheckoutPage() {
             </p>
           )}
 
-          <button type="submit" className="btn btn-primary btn-block pdp-btn" disabled={submitting || loading || !quote || !quote.canCheckout}>
+          <button type="submit" className="btn btn-primary btn-block pdp-btn" disabled={submitting || loading || !quote || !quote.canCheckout || quote.shippingPending || quote.provinceUnavailable}>
             {submitting ? 'Placing order...' : 'Place Order'}
           </button>
           <Link to="/cart" className="btn btn-outline btn-block">

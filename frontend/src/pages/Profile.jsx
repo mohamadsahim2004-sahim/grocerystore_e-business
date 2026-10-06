@@ -1,5 +1,6 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { prepareAvatar, AVATAR_ACCEPT } from '../lib/avatarImage';
 
 const formatMemberSince = (value) => {
   const date = new Date(value);
@@ -21,7 +22,7 @@ function validate({ name, email, phone }) {
 }
 
 export default function Profile() {
-  const { user, fetchProfile, updateProfile } = useContext(AuthContext);
+  const { user, fetchProfile, updateProfile, updateAvatar, removeAvatar } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -34,6 +35,11 @@ export default function Profile() {
   const [fetching, setFetching] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  // While a photo is being saved: the chosen picture (shown immediately) and how far the upload is
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [photoProgress, setPhotoProgress] = useState(null); // null | 'preparing' | 0-100
+  const fileInputRef = useRef(null);
 
   // Load the latest profile from the API
   useEffect(() => {
@@ -104,16 +110,78 @@ export default function Profile() {
     }
   };
 
+  // Photo actions save immediately (they are separate from the Edit Profile / Save Changes text fields)
+  const handlePhotoChosen = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // lets the same file be picked again later
+    if (!file || photoBusy) return;
+    setStatus({ type: '', text: '' });
+    setPhotoBusy(true);
+    setPhotoProgress('preparing');
+    try {
+      const prepared = await prepareAvatar(file);
+      setPhotoPreview(prepared); // show the new picture straight away while it uploads
+      setPhotoProgress(0);
+      await updateAvatar(prepared, setPhotoProgress);
+      setStatus({ type: 'success', text: 'Profile photo updated!' });
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message });
+    } finally {
+      setPhotoPreview('');
+      setPhotoProgress(null);
+      setPhotoBusy(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setStatus({ type: '', text: '' });
+    setPhotoBusy(true);
+    try {
+      await removeAvatar();
+      setStatus({ type: 'success', text: 'Profile photo removed.' });
+    } catch (err) {
+      setStatus({ type: 'error', text: err.message });
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
   return (
     <div className="account-panel">
       <div className="account-panel__head">
-        <span className="account-avatar account-avatar--lg" aria-hidden="true">
-          {(formData.name || user?.name || 'U').trim()[0]?.toUpperCase()}
+        <span className={`account-avatar account-avatar--lg${photoBusy ? ' is-uploading' : ''}`} aria-hidden="true">
+          {photoPreview || user?.avatar ? <img src={photoPreview || user.avatar} alt="" /> : (formData.name || user?.name || 'U').trim()[0]?.toUpperCase()}
+          {photoBusy && photoProgress !== null && <span className="account-avatar__overlay" data-testid="photo-progress">{typeof photoProgress === 'number' ? `${photoProgress}%` : '…'}</span>}
         </span>
         <div>
           <h1 className="page-title">{fetching ? 'My Profile' : formData.name || 'My Profile'}</h1>
           {!fetching && formData.email && <p className="account-panel__email">{formData.email}</p>}
         </div>
+      </div>
+
+      <div className="profile-photo">
+        <input ref={fileInputRef} type="file" accept={AVATAR_ACCEPT} hidden onChange={handlePhotoChosen} data-testid="photo-input" />
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => fileInputRef.current?.click()} disabled={fetching || photoBusy}>
+          {photoBusy ? (photoProgress === 'preparing' ? 'Preparing photo...' : 'Uploading photo...') : user?.avatar ? 'Change photo' : 'Add photo'}
+        </button>
+        {user?.avatar && (
+          <button type="button" className="btn btn-outline btn-sm" onClick={handleRemovePhoto} disabled={photoBusy}>
+            Remove photo
+          </button>
+        )}
+        {photoBusy && (
+          <span
+            className="profile-photo__progress"
+            role="progressbar"
+            aria-label="Photo upload progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={typeof photoProgress === 'number' ? photoProgress : undefined}
+          >
+            <span style={{ width: `${typeof photoProgress === 'number' ? photoProgress : 5}%` }} />
+          </span>
+        )}
+        <span className="profile-photo__hint">JPEG, PNG or WebP. Your photo is resized automatically and saved to your account.</span>
       </div>
 
       {status.text && (
@@ -188,7 +256,7 @@ export default function Profile() {
 
         <div className="form-group">
           <span className="form-static-label">Member Since</span>
-          <p className="form-static-value">{fetching ? '\u2013' : formatMemberSince(memberSince) || '\u2013'}</p>
+          <p className="form-static-value">{fetching ? '–' : formatMemberSince(memberSince) || '–'}</p>
         </div>
 
         <div className="profile-form__actions">

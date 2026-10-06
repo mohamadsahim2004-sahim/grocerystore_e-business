@@ -1,7 +1,6 @@
 // Creates (or promotes) the first admin account using the real User model.
 // Non-destructive: nothing is deleted and existing data is left untouched.
-// Products/categories are seeded separately with `node seed/seedGroceries.js`.
-//
+// Products and categories are created from the admin panel (/admin/categories, /admin/products).
 // Usage: ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=choose-a-password ADMIN_NAME="Store Admin" node seed/seed.js
 
 require('dotenv').config();

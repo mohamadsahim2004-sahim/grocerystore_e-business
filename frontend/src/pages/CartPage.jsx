@@ -74,7 +74,7 @@ export default function CartPage() {
 
   const itemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
   const promoApplied = quote?.promo?.valid ? quote.promo : null;
-  const freeShippingGap = quote && quote.shippingPrice > 0 ? quote.freeShippingThreshold - quote.itemsPrice : 0;
+  const freeShippingGap = quote && quote.itemsPrice > 0 && quote.itemsPrice <= quote.freeShippingThreshold ? quote.freeShippingThreshold - quote.itemsPrice : 0;
 
   return (
     <div className="cart container">
@@ -195,7 +195,7 @@ export default function CartPage() {
               )}
               <div>
                 <dt>Shipping</dt>
-                <dd>{quote.shippingPrice === 0 ? 'Free' : formatPrice(quote.shippingPrice)}</dd>
+                <dd>{quote.shippingPending ? 'Calculated at checkout' : quote.shippingPrice === 0 ? 'Free' : formatPrice(quote.shippingPrice)}</dd>
               </div>
               <div className="totals__grand">
                 <dt>Total</dt>

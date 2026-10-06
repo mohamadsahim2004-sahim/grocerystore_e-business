@@ -134,7 +134,7 @@ export default function OrderSuccessPage() {
             <br />
             {a.city}, {a.postalCode}
             <br />
-            {a.country}
+            {a.province ? `${a.province} Province, ` : ''}{a.country}
             <br />
             {a.phone}
           </address>

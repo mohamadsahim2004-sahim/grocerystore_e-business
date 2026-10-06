@@ -44,7 +44,7 @@ function AccountMenu({ user, isAdmin, onLogout }) {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <UserIcon size={22} />
+        {user.avatar ? <img className="icon-btn__avatar" src={user.avatar} alt="" /> : <UserIcon size={22} />}
       </button>
 
       {open && (

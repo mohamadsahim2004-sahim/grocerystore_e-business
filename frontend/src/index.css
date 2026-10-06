@@ -51,24 +51,6 @@
   --transition: 0.18s ease;
   --container-max: 1280px;
   --header-height: 76px;
-
-  /* Legacy aliases: pages built earlier keep working and inherit the light palette */
-  --bg-main: var(--bg-page);
-  --bg-input: var(--bg-subtle);
-  --border-glass: var(--border);
-  --text-primary: var(--ink-900);
-  --text-secondary: var(--ink-700);
-  --text-muted: var(--ink-500);
-  --neon-green-bright: var(--green-600);
-  --neon-green-hover: var(--green-700);
-  --accent-danger: var(--danger);
-  --accent-warning: var(--warm-600);
-  --font-body: var(--font-sans);
-  --font-heading: var(--font-sans);
-  --shadow-lg: var(--shadow-md);
-  --shadow-neon: var(--shadow-sm);
-  --transition-fast: var(--transition);
-  --transition-normal: var(--transition);
 }
 
 /* ==========================================================================
@@ -182,9 +164,7 @@ h4 {
    Buttons
    ========================================================================== */
 .btn,
-.primary-btn,
-.logout-btn,
-.add-to-cart-btn {
+.primary-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -201,32 +181,27 @@ h4 {
 }
 
 .btn-primary,
-.primary-btn,
-.add-to-cart-btn {
+.primary-btn {
   background: var(--green-800);
   color: var(--white);
 }
 
 .btn-primary:hover,
-.primary-btn:hover,
-.add-to-cart-btn:hover {
+.primary-btn:hover {
   background: var(--green-700);
 }
 
-.btn-outline,
-.logout-btn {
+.btn-outline {
   background: var(--white);
   color: var(--green-800);
   border-color: var(--green-800);
 }
 
-.btn-outline:hover,
-.logout-btn:hover {
+.btn-outline:hover {
   background: var(--green-50);
 }
 
-.btn-block,
-.add-to-cart-btn {
+.btn-block {
   width: 100%;
 }
 
@@ -552,10 +527,6 @@ textarea.form-control {
   gap: 40px;
   padding-top: 48px;
   padding-bottom: 40px;
-}
-
-.footer-brand .brand-logo img {
-  height: 64px;
 }
 
 .footer-tagline {
@@ -913,7 +884,7 @@ textarea.form-control {
   font-weight: 600;
 }
 
-.product-card__title button {
+.product-card__title a {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -926,7 +897,7 @@ textarea.form-control {
   color: var(--ink-900);
 }
 
-.product-card__title button:hover {
+.product-card__title a:hover {
   color: var(--green-700);
 }
 
@@ -986,8 +957,7 @@ textarea.form-control {
 }
 
 /* Auth & profile pages */
-.auth-container,
-.profile-container {
+.auth-container {
   width: calc(100% - 32px);
   max-width: 460px;
   margin: 40px auto;
@@ -1006,8 +976,7 @@ textarea.form-control {
   gap: 16px;
 }
 
-.auth-container h2,
-.profile-container h2 {
+.auth-container h2 {
   margin-bottom: 16px;
 }
 
@@ -1018,13 +987,6 @@ textarea.form-control {
 .auth-container a {
   color: var(--green-700);
   font-weight: 600;
-}
-
-.profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 /* ==========================================================================
@@ -1180,8 +1142,7 @@ textarea.form-control {
     right: 6px;
   }
 
-  .auth-container,
-  .profile-container {
+  .auth-container {
     margin: 24px auto;
     padding: 20px;
   }
@@ -2002,16 +1963,6 @@ textarea.form-control {
     padding: 0 10px;
   }
 }
-.product-card__title a,
-.product-card__title button {
-  display: -webkit-box;
-  /* ...rest of the rule unchanged */
-}
-
-.product-card__title a:hover,
-.product-card__title button:hover {
-  color: var(--green-700);
-}
 /* ==========================================================================
    Product details
    ========================================================================== */
@@ -2668,11 +2619,11 @@ textarea.form-control {
   color: var(--green-700);
 }
 
-.totals__grand {
+.totals .totals__grand {
   margin-top: 6px;
-  padding-top: 12px !important;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
-  font-size: 19px !important;
+  font-size: 19px;
 }
 
 .totals__grand dt,
@@ -3033,9 +2984,6 @@ textarea.form-control {
 }
 
 @media (max-width: 480px) {
-  .form-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 
   .promo-form {
     flex-wrap: wrap;
@@ -3157,10 +3105,6 @@ textarea.form-control {
 
 .account-nav__link--logout:hover {
   background: #fdeeee;
-}
-
-.account-content {
-  min-width: 0;
 }
 
 .account-panel {
@@ -3290,17 +3234,6 @@ textarea.form-control {
   padding-top: 20px;
 }
 
-.admin-topbar {
-  display: none;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 10px 14px;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-}
-
 .admin-layout {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
@@ -3322,75 +3255,6 @@ textarea.form-control {
   align-items: center;
   gap: 12px;
   padding: 18px;
-  border-bottom: 1px solid var(--border);
-}
-
-.admin-sidebar__brand strong {
-  display: block;
-  font-size: 14px;
-}
-
-.admin-sidebar__brand span {
-  display: block;
-  font-size: 12px;
-  color: var(--ink-500);
-}
-
-.admin-nav {
-  padding: 8px;
-}
-
-.admin-nav__link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 11px 12px;
-  background: none;
-  border: 0;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--ink-700);
-}
-
-.admin-nav__link svg {
-  flex: 0 0 auto;
-  color: var(--ink-500);
-}
-
-.admin-nav__link:hover {
-  background: var(--green-50);
-  color: var(--green-800);
-}
-
-.admin-nav__link.is-active {
-  background: var(--green-100);
-  color: var(--green-800);
-}
-
-.admin-nav__link.is-active svg {
-  color: var(--green-700);
-}
-
-.admin-nav__link--logout {
-  margin-top: 6px;
-  border-top: 1px solid var(--border);
-  border-radius: 0;
-  color: var(--danger);
-}
-
-.admin-nav__link--logout svg {
-  color: var(--danger);
-}
-
-.admin-nav__link--logout:hover {
-  background: #fdeeee;
-}
-
-.admin-content {
-  min-width: 0;
 }
 
 .admin-page__head {
@@ -3747,45 +3611,10 @@ textarea.form-control {
   padding-bottom: 0;
 }
 
-/* Admin drawer (mobile nav), reuses .drawer-backdrop from the shop filter drawer */
-.admin-drawer {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 210;
-  display: flex;
-  flex-direction: column;
-  width: min(82vw, 300px);
-  background: var(--white);
-  box-shadow: var(--shadow-md);
-}
-
-.admin-drawer__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 8px 14px 18px;
-  border-bottom: 1px solid var(--border);
-}
-
-@media (min-width: 993px) {
-  .admin-drawer {
-    display: none;
-  }
-}
-
 @media (max-width: 992px) {
-  .admin-topbar {
-    display: flex;
-  }
 
   .admin-layout {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .admin-sidebar {
-    display: none;
   }
 
   .metric-grid {
@@ -4266,5 +4095,827 @@ textarea.form-control {
 
   .settings-section__head {
     flex-wrap: wrap;
+  }
+}
+
+/* Profile photo */
+.account-avatar {
+  overflow: hidden;
+}
+
+.account-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.icon-btn__avatar {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.profile-photo__hint {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+/* ---- Product reviews ---- */
+.reviews-summary {
+  margin-bottom: 20px;
+}
+
+.review-hint {
+  margin: 16px 0;
+  color: var(--ink-500);
+  font-size: 14px;
+}
+
+.review-form {
+  margin: 20px 0;
+  padding: 18px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.review-form h3 {
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.star-input {
+  display: flex;
+  gap: 4px;
+}
+
+.star-btn {
+  padding: 2px;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  line-height: 0;
+  cursor: pointer;
+}
+
+.star-btn:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+
+.review-form__count {
+  display: block;
+  margin-top: 4px;
+  text-align: right;
+  color: var(--ink-500);
+}
+
+.review-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.review-list {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-item {
+  padding: 14px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.review-item--mine {
+  background: var(--green-50);
+  border-color: var(--green-200);
+}
+
+.review-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.review-item__head time {
+  color: var(--ink-500);
+}
+
+.review-item__rating {
+  margin: 6px 0;
+}
+
+.review-item__text {
+  margin: 0;
+  color: var(--ink-700);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.review-item__actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .reviews-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Order details: review action under an item */
+.order-review {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.order-review--done {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-700);
+}
+/* ==========================================================================
+   Phase 13: profile photo upload, order cancellation, delivery settings,
+   support chat. (Also gives the admin sidebar links / cancel dialog styles
+   they were missing, so the new admin pages can be reached on every screen.)
+   ========================================================================== */
+
+/* ---- Profile photo: preview + upload progress ---- */
+.account-avatar {
+  position: relative;
+}
+
+.account-avatar.is-uploading img {
+  opacity: 0.55;
+}
+
+.account-avatar__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 77, 46, 0.45);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.profile-photo__progress {
+  flex: 1 1 100%;
+  max-width: 320px;
+  height: 6px;
+  overflow: hidden;
+  background: var(--green-100);
+  border-radius: var(--radius-pill);
+}
+
+.profile-photo__progress > span {
+  display: block;
+  height: 100%;
+  background: var(--green-600);
+  border-radius: var(--radius-pill);
+  transition: width 0.2s ease;
+}
+
+/* ---- Order cancellation ---- */
+.order-cancel {
+  margin-top: 20px;
+}
+
+.order-cancel p {
+  margin: 0 0 12px;
+  color: var(--ink-700);
+}
+
+.order-cancel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.order-cancel + .notice,
+.order-success__grid + .notice,
+.order-success__grid ~ .notice {
+  margin-top: 20px;
+}
+
+.order-cancel-by {
+  display: block;
+  margin-top: 2px;
+}
+
+/* ---- Admin sidebar links (AdminLayout) ---- */
+.admin-sidebar__header {
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-sidebar__brand {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--green-800);
+}
+
+.admin-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+}
+
+.admin-sidebar__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.admin-sidebar__link:hover {
+  background: var(--bg-subtle);
+  color: var(--green-800);
+}
+
+.admin-sidebar__link.active {
+  background: var(--green-100);
+  color: var(--green-800);
+}
+
+.admin-sidebar__footer {
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-layout__content {
+  min-width: 0;
+}
+
+.support-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--danger);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--white);
+}
+
+@media (max-width: 992px) {
+  /* The sidebar used to disappear on small screens, leaving no way to move around the admin area */
+  .admin-sidebar {
+    position: static;
+    display: block;
+  }
+
+  .admin-sidebar__header,
+  .admin-sidebar__footer {
+    display: none;
+  }
+
+  .admin-sidebar__nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-sidebar__link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+/* ---- Admin cancel dialog + a few shared admin bits that had no styles ---- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(16, 38, 27, 0.5);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 440px;
+  padding: 22px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.modal-content h3 {
+  margin: 0 0 10px;
+}
+
+.modal-content p {
+  margin: 0 0 18px;
+  color: var(--ink-700);
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn--outline {
+  background: var(--white);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-900);
+}
+
+.btn--danger {
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  color: var(--white);
+}
+
+.admin-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+
+.admin-alert--error {
+  background: #fdeeee;
+  border: 1px solid #f5cccc;
+  color: var(--danger);
+}
+
+.admin-alert__close {
+  background: none;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: inherit;
+}
+
+.status-pill--select {
+  border: 0;
+  cursor: pointer;
+}
+
+.review-item__remove {
+  color: var(--danger);
+}
+
+/* ---- Admin settings: delivery charges ---- */
+.settings-help {
+  margin: 0 0 14px;
+  color: var(--ink-700);
+}
+
+.settings-actions {
+  margin-top: 16px;
+}
+
+.delivery-table__input {
+  width: 130px;
+  max-width: 100%;
+}
+
+.delivery-table__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  /* Each province becomes a small card so every column stays visible on a phone */
+  .delivery-table thead {
+    display: none;
+  }
+
+  .delivery-table,
+  .delivery-table tbody {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .delivery-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'prov status'
+      'charge deliver';
+    gap: 8px 12px;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .delivery-table td {
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .delivery-table__province {
+    grid-area: prov;
+    font-weight: 700;
+  }
+
+  .delivery-table__status {
+    grid-area: status;
+    text-align: right;
+  }
+
+  .delivery-table__charge {
+    grid-area: charge;
+  }
+
+  .delivery-table__deliver {
+    grid-area: deliver;
+  }
+
+  .delivery-table__input {
+    width: 120px;
+  }
+
+  .delivery-table .status-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+}
+
+/* ---- Support chat (customer) ---- */
+.support-chat {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.support-chat__launcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  background: var(--green-800);
+  border: 0;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-md);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.support-chat__launcher:hover {
+  background: var(--green-700);
+}
+
+.support-chat__badge {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: var(--danger);
+  border: 2px solid var(--white);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.support-chat__window {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  height: 480px;
+  max-height: calc(100vh - 110px);
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.support-chat__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--green-800);
+  color: var(--white);
+}
+
+.support-chat__head small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.support-chat__close {
+  background: none;
+  border: 0;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--white);
+}
+
+.support-chat__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  background: var(--bg-subtle);
+}
+
+.support-chat__body--center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.support-chat__note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-500);
+  text-align: center;
+}
+
+.support-chat__note--error {
+  color: var(--danger);
+}
+
+.support-chat__form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+}
+
+.support-chat__form textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 10px;
+  resize: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 14px;
+}
+
+.chat-msg {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+}
+
+.chat-msg p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-msg time,
+.chat-msg__failed {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.chat-msg--me {
+  align-self: flex-end;
+  background: var(--green-700);
+  color: var(--white);
+  border-bottom-right-radius: 4px;
+}
+
+.chat-msg--them {
+  align-self: flex-start;
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--ink-900);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg--pending {
+  opacity: 0.8;
+}
+
+.chat-msg--pending.is-failed {
+  background: var(--danger);
+  opacity: 1;
+}
+
+.chat-msg--pending .link-btn {
+  color: var(--white);
+  font-size: 11px;
+}
+
+@media (max-width: 480px) {
+  .support-chat {
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .support-chat__window {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 90px);
+  }
+
+  .support-chat__launcher-text {
+    display: none;
+  }
+
+  .support-chat__launcher {
+    padding: 0 16px;
+  }
+}
+
+/* ---- Support inbox (admin) ---- */
+.support-admin {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.support-inbox,
+.support-pane {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.support-inbox {
+  max-height: calc(100vh - 220px);
+  min-height: 200px;
+  overflow-y: auto;
+}
+
+.support-inbox__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.support-inbox__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-900);
+}
+
+.support-inbox__item:hover {
+  background: var(--bg-subtle);
+}
+
+.support-inbox__item.is-active {
+  background: var(--green-50);
+  box-shadow: inset 3px 0 0 var(--green-600);
+}
+
+.support-inbox__item.is-unread strong {
+  color: var(--green-800);
+}
+
+.support-inbox__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.support-inbox__email,
+.support-inbox__item time {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.support-inbox__preview {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--ink-700);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.support-pane {
+  min-height: 320px;
+}
+
+.support-pane__empty {
+  padding: 24px;
+}
+
+.support-thread {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 220px);
+  min-height: 360px;
+}
+
+.support-thread__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.support-thread__head small {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-500);
+}
+
+.support-thread__back {
+  display: none;
+  font-weight: 600;
+  color: var(--green-700);
+}
+
+.support-thread__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  overflow-y: auto;
+  background: var(--bg-subtle);
+}
+
+@media (max-width: 768px) {
+  .support-admin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One panel at a time on phones: the inbox, or the open conversation */
+  .support-admin.has-thread .support-inbox {
+    display: none;
+  }
+
+  .support-admin:not(.has-thread) .support-pane {
+    display: none;
+  }
+
+  .support-thread__back {
+    display: inline;
+  }
+
+  .support-thread {
+    height: calc(100vh - 260px);
   }
 }

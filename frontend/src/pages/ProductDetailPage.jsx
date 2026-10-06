@@ -1,11 +1,20 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
 import ProductCard from '../components/ProductCard';
 import QuantityControl from '../components/QuantityControl';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
-import { HeartIcon, StarIcon, CartIcon, ImageIcon, ShieldCheckIcon, TruckIcon, AlertIcon } from '../components/Icons';
+import ReviewSection from '../components/ReviewSection';
+import {
+  HeartIcon,
+  StarIcon,
+  CartIcon,
+  ImageIcon,
+  ShieldCheckIcon,
+  TruckIcon,
+  AlertIcon
+} from '../components/Icons';
 import useProductDetail from '../hooks/useProductDetail';
 
 const TABS = [
@@ -28,24 +37,30 @@ function Stars({ value }) {
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart, wishlist, toggleWishlist, formatPrice } = useContext(StoreContext);
   const { status, error, product, category, related, relatedLoading, reload } = useProductDetail(id);
+
+  const wantsReviews = location.hash === '#reviews';
 
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [failedImages, setFailedImages] = useState({});
-  const [tab, setTab] = useState('description');
+  const [tab, setTab] = useState(wantsReviews ? 'reviews' : 'description');
+  const [reviewSummary, setReviewSummary] = useState(null);
   const [added, setAdded] = useState(0);
 
-  // A different product (new URL) starts fresh
+  // Reset state on URL product change
   useEffect(() => {
     setQuantity(1);
     setActiveImage(0);
     setFailedImages({});
-    setTab('description');
+    setTab(wantsReviews ? 'reviews' : 'description');
+    setReviewSummary(null);
     setAdded(0);
-  }, [id]);
+  }, [id, wantsReviews]);
 
+  // Update Document Title
   useEffect(() => {
     if (!product) return undefined;
     const previous = document.title;
@@ -55,6 +70,14 @@ export default function ProductDetailPage() {
     };
   }, [product]);
 
+  // Scroll into view if linked via #reviews hash
+  useEffect(() => {
+    if (product && wantsReviews) {
+      document.getElementById('reviews')?.scrollIntoView?.({ behavior: 'smooth' });
+    }
+  }, [product, wantsReviews]);
+
+  // Toast/Added notification timer
   useEffect(() => {
     if (!added) return undefined;
     const timer = setTimeout(() => setAdded(0), 4000);
@@ -94,7 +117,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  // ---- Ready ------------------------------------------------------------------
+  // Ready State Calculations
   const images = [...new Set([product.image, ...(product.images || [])].filter(Boolean))];
   const currentImage = images[Math.min(activeImage, images.length - 1)];
   const hasStockInfo = typeof product.stock === 'number';
@@ -104,7 +127,10 @@ export default function ProductDetailPage() {
   const hasDiscount = Boolean(product.oldPrice && product.oldPrice > product.price);
   const discountPercent = hasDiscount ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
   const isWishlisted = wishlist.some((item) => item.id === product.id);
-  const reviewCount = product.reviewCount || 0;
+
+  // Dynamic Rating & Review values
+  const reviewCount = reviewSummary ? reviewSummary.reviewCount : product.reviewCount || 0;
+  const ratingValue = reviewSummary ? reviewSummary.rating : product.rating;
 
   const handleAdd = () => {
     addToCart(product, quantity);
@@ -126,6 +152,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="pdp container">
+      {/* Breadcrumb Navigation */}
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
         <span aria-hidden="true">/</span>
@@ -144,6 +171,7 @@ export default function ProductDetailPage() {
         <span aria-current="page">{product.name}</span>
       </nav>
 
+      {/* Product Summary Header */}
       <div className="pdp-top">
         {/* Gallery */}
         <div className="pdp-gallery">
@@ -195,9 +223,9 @@ export default function ProductDetailPage() {
           <h1 className="pdp-title">{product.name}</h1>
 
           <div className="pdp-rating">
-            <Stars value={product.rating} />
+            <Stars value={ratingValue} />
             <span className="pdp-rating__text">
-              {reviewCount > 0 ? `${product.rating} (${reviewCount} reviews)` : 'No reviews yet'}
+              {reviewCount > 0 ? `${ratingValue} (${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'})` : 'No reviews yet'}
             </span>
           </div>
 
@@ -265,8 +293,8 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <section className="pdp-tabs" aria-label="Product details">
+      {/* Tabs Section */}
+      <section className="pdp-tabs" id="reviews" aria-label="Product details">
         <div className="pdp-tabs__list" role="tablist">
           {TABS.map((t) => (
             <button
@@ -309,25 +337,12 @@ export default function ProductDetailPage() {
           )}
 
           {tab === 'reviews' && (
-            <div className="reviews-summary">
-              <div className="reviews-summary__score">
-                <strong>{reviewCount > 0 ? Number(product.rating || 0).toFixed(1) : '–'}</strong>
-                <Stars value={product.rating} />
-                <span>
-                  {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
-                </span>
-              </div>
-              <p className="reviews-summary__note">
-                {reviewCount > 0
-                  ? 'This rating is the average of our customers’ reviews. Individual written reviews will appear here soon.'
-                  : 'This product has no reviews yet.'}
-              </p>
-            </div>
+            <ReviewSection productId={product.id} onSummaryChange={setReviewSummary} />
           )}
         </div>
       </section>
 
-      {/* Related products */}
+      {/* Related Products Section */}
       {(relatedLoading || related.length > 0) && (
         <section className="pdp-related" aria-labelledby="related-title">
           <h2 id="related-title" className="section-title">

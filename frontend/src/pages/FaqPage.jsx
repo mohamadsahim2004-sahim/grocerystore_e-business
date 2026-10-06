@@ -123,7 +123,9 @@ export default function FaqPage() {
       items: [
         {
           q: 'What is your returns and refund policy?',
-          a: RETURNS_POLICY || (
+          a: RETURNS_POLICY ? (
+            `You can return items within ${RETURNS_POLICY.returnWindowDays} days of delivery. ${RETURNS_POLICY.condition}`
+          ) : (
             <>
               A returns and refund policy has not been published on this site yet. If there is a problem with your order, please{' '}
               <Link to="/contact">contact us</Link> with your order number and details.

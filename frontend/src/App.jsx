@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
 // Providers & Context
 import { StoreProvider } from './context/StoreContext';
 import { AuthProvider } from './context/AuthContext';
@@ -13,6 +14,7 @@ import AdminProductForm from './components/AdminProductForm';
 import AdminCategories from './components/AdminCategories';
 import AdminLayout from './components/AdminLayout';
 import ScrollToTop from './components/ScrollToTop';
+import SupportChat from './components/SupportChat';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -31,6 +33,7 @@ import AdminOrderDetail from './pages/AdminOrderDetail';
 import AdminUsers from './pages/AdminUser';
 import AdminUserDetail from './pages/AdminUserDetail';
 import AdminInventory from './pages/AdminInventory';
+import AdminSupport from './pages/AdminSupport';
 import PlaceholderPage from './pages/PlaceholderPage';
 import AddressesPage from './pages/AddressesPage';
 import SettingsPage from './pages/SettingsPage';
@@ -231,6 +234,14 @@ function MainApp() {
               }
             />
             <Route
+              path="/admin/support/:id?"
+              element={
+                <AdminLayout>
+                  <AdminSupport />
+                </AdminLayout>
+              }
+            />
+            <Route
               path="/admin/settings"
               element={
                 <AdminLayout>
@@ -246,6 +257,7 @@ function MainApp() {
       </main>
 
       <Footer />
+      <SupportChat />
     </div>
   );
 }

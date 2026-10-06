@@ -28,10 +28,18 @@ function readBody(body, { partial } = { partial: false }) {
     if (!Number.isFinite(n) || n < 0) errors[key] = `${key} must be a positive number`;
     else data[key] = n;
   });
+
+  // Explicitly clear oldPrice when sent as empty or null
+  if (body.oldPrice === '' || body.oldPrice === null) {
+    data.oldPrice = null;
+  }
+
   if (!partial && data.price === undefined) errors.price = 'Price is required';
   if (!partial && data.stock === undefined) errors.stock = 'Stock is required';
   if (data.stock !== undefined && !Number.isInteger(data.stock)) errors.stock = 'Stock must be a whole number';
-  if (data.oldPrice !== undefined && data.price !== undefined && data.oldPrice > 0 && data.oldPrice <= data.price) {
+
+  // Validate oldPrice only when it is a numeric value
+  if (typeof data.oldPrice === 'number' && data.price !== undefined && data.oldPrice > 0 && data.oldPrice <= data.price) {
     errors.oldPrice = 'Old price must be greater than the current price';
   }
 
@@ -91,7 +99,7 @@ router.get(
   })
 );
 
-// @desc    Update a product (partial)
+// @desc    Update a product (partial) with stock concurrency guard
 // @route   PUT /api/admin/products/:id
 // @access  Private/Admin
 router.put(
@@ -109,10 +117,33 @@ router.put(
       data.slug = await uniqueSlug(Product, data.slug, product._id);
     }
 
-    Object.assign(product, data);
-    await product.save();
-    await product.populate('category', 'name slug');
-    res.json(product);
+    const { stock, ...rest } = data;
+    const guardStock = stock !== undefined && req.body.expectedStock !== undefined;
+
+    // Apply rest of non-stock metadata changes to mongoose document instance
+    Object.assign(product, guardStock ? rest : data);
+    await product.validate();
+
+    if (guardStock) {
+      const expected = Number(req.body.expectedStock);
+      if (!Number.isInteger(expected) || expected < 0) {
+        throw new HttpError(400, 'Invalid expected stock value');
+      }
+
+      const result = await Product.updateOne({ _id: product._id, stock: expected }, { $set: { stock } });
+
+      if (result.matchedCount !== 1) {
+        const current = await Product.findById(product._id, 'stock');
+        throw new HttpError(409, `Stock changed to ${current?.stock} since you opened this form (orders were placed). Nothing was saved.`, {
+          code: 'STOCK_CHANGED',
+          currentStock: current?.stock,
+          errors: { stock: `Stock is now ${current?.stock}. Enter the new total and save again.` }
+        });
+      }
+    }
+
+    await product.save(); // writes modified non-stock paths (and stock if not guarded)
+    res.json(await Product.findById(product._id).populate('category', 'name slug'));
   })
 );
 
