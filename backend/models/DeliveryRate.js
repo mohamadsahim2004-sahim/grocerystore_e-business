@@ -8,7 +8,8 @@ const deliveryRateSchema = new mongoose.Schema(
     province: { type: String, required: true, unique: true, enum: PROVINCES },
     charge: { type: Number, required: true, min: 0, max: MAX_PROVINCE_CHARGE },
     enabled: { type: Boolean, default: true },
-    // false = not configured yet (charge is meaningless and never used for orders); true once an admin has saved it    confirmed: { type: Boolean, default: false },
+    // false = not configured yet (charge is meaningless and never used for orders); true once an admin has saved it
+    confirmed: { type: Boolean, default: false },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   },
   { timestamps: true }
