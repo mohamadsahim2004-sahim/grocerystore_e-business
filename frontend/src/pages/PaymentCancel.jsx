@@ -52,9 +52,11 @@ export default function PaymentCancel() {
         <span className="order-success__icon">
           <AlertIcon size={44} />
         </span>
-        <h1>{startFailed ? "We couldn't start the payment" : 'Payment cancelled'}</h1>
+        <h1>{order?.isPaid ? 'Payment already received' : startFailed ? "We couldn't start the payment" : 'Payment cancelled'}</h1>
         <p>
-          Your payment was not completed and you have not been charged. {order?.isPaid ? '' : 'Your order is saved but is not paid yet.'}
+          {order?.isPaid
+            ? 'PayHere has already confirmed the payment for this order, so there is nothing more to pay.'
+            : 'Your payment was not completed. Your order is saved but is not paid yet.'}
         </p>
         {orderId && (
           <p className="order-id">

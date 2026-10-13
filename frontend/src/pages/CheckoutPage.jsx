@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
 import { AuthContext } from '../context/AuthContext';
@@ -8,8 +8,9 @@ import CurrencyNotice from '../components/CurrencyNotice';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { ImageIcon, AlertIcon } from '../components/Icons';
 import useCartQuote from '../hooks/useCartQuote';
-import { startPayHerePayment } from '../lib/payhere';
 import { formatMoney } from '../config/currency';
+import { phoneError, postalCodeError } from '../lib/addressValidation';
+import { rememberPendingOrder, submitPayHereForm } from '../lib/payhere';
 
 const FIELDS = [
   { name: 'fullName', label: 'Full Name', autoComplete: 'name', type: 'text' },
@@ -20,31 +21,35 @@ const FIELDS = [
   { name: 'country', label: 'Country', autoComplete: 'country-name', type: 'text' }
 ];
 
+// Same rules and messages as the backend (backend/routes/orderRoutes.js + utils/addressValidation.js)
 function validate(form) {
   const errors = {};
   const len = (v, min, max, key, label) => {
     const t = (v || '').trim();
-    if (t.length < min || t.length > max) {
-      errors[key] = `${label} must be between ${min} and ${max} characters`;
-    }
+    if (!t) errors[key] = `${label} is required`;
+    else if (t.length < min || t.length > max) errors[key] = `${label} must be between ${min} and ${max} characters`;
   };
 
   len(form.fullName, 2, 100, 'fullName', 'Full name');
-  len(form.phone, 7, 20, 'phone', 'Phone number');
   len(form.street, 3, 200, 'street', 'Address');
   len(form.city, 2, 100, 'city', 'City');
-  len(form.postalCode, 2, 12, 'postalCode', 'Postal code');
   len(form.country, 2, 100, 'country', 'Country');
   if (!form.province) errors.province = 'Select your delivery province';
 
-  if (!errors.phone && (!/^[+()\-\s\d]+$/.test(form.phone.trim()) || form.phone.replace(/\D/g, '').length < 7)) {
-    errors.phone = 'Enter a valid phone number';
-  }
-  if (!errors.postalCode && !/^[A-Za-z0-9\- ]+$/.test(form.postalCode.trim())) {
-    errors.postalCode = 'Enter a valid postal code';
-  }
+  // Phone and postal code formats depend on the country (Sri Lanka: 07XXXXXXXX / +947XXXXXXXX / 947XXXXXXXX, 5-digit postal code)
+  const phoneProblem = phoneError(form.phone, form.country);
+  if (phoneProblem) errors.phone = phoneProblem;
+  const postalProblem = postalCodeError(form.postalCode, form.country);
+  if (postalProblem) errors.postalCode = postalProblem;
   return errors;
 }
+
+// One key per checkout visit: if the same order is submitted twice (double click, retry after a lost response)
+// the backend returns the order it already created instead of creating a second one.
+const newIdempotencyKey = () => {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `co-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}${Math.random().toString(36).slice(2, 14)}`;
+};
 
 export default function CheckoutPage() {
   const { cart, clearCart, formatPrice, promoCode } = useContext(StoreContext);
@@ -84,6 +89,57 @@ export default function CheckoutPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false); // set synchronously, so a fast double click cannot submit twice
+  const idempotencyKey = useRef(newIdempotencyKey());
+  const [redirecting, setRedirecting] = useState(false); // true while the customer is being sent to PayHere
+
+  // Province follows the city: 'auto' = filled from the city, 'manual' = chosen/corrected by the customer.
+  const provinceSource = useRef('');
+  const [provinceHint, setProvinceHint] = useState('');
+  useEffect(() => {
+    if (rates.status !== 'ready') return undefined;
+    const city = form.city.trim();
+    if (!city) {
+      setProvinceHint('');
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      api
+        .get('/delivery-rates/province', { params: { city } })
+        .then(({ data }) => {
+          if (cancelled) return;
+          const province = data.province || '';
+          if (province && rates.list.some((r) => r.province === province)) {
+            provinceSource.current = 'auto';
+            setForm((prev) => ({ ...prev, province }));
+            setFieldErrors((prev) => (prev.province ? { ...prev, province: undefined } : prev));
+            setProvinceHint('');
+            return;
+          }
+          if (province) {
+            // Identified, but we cannot deliver there (disabled / no charge configured yet)
+            provinceSource.current = '';
+            setForm((prev) => ({ ...prev, province: '' }));
+            setProvinceHint(`Delivery to ${province} Province is not available right now. Please contact us or choose another address.`);
+            return;
+          }
+          // Not identified: never guess. Drop a province we filled in for a previous city, keep one the customer chose.
+          if (provinceSource.current === 'auto') {
+            provinceSource.current = '';
+            setForm((prev) => ({ ...prev, province: '' }));
+          }
+          setProvinceHint("We couldn't identify the province for this city. Please select your delivery province.");
+        })
+        .catch(() => !cancelled && setProvinceHint('Please select your delivery province.'));
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [form.city, rates.status, rates.list]);
 
   useEffect(() => {
     if (!user) return;
@@ -111,7 +167,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cart.length === 0) {
+  if (cart.length === 0 && !redirecting) {
     return (
       <div className="container page-section">
         <EmptyState
@@ -124,6 +180,10 @@ export default function CheckoutPage() {
   }
 
   const handleChange = (e) => {
+    if (e.target.name === 'province') {
+      provinceSource.current = e.target.value ? 'manual' : '';
+      setProvinceHint('');
+    }
     setForm({ ...form, [e.target.name]: e.target.value });
     if (fieldErrors[e.target.name]) {
       setFieldErrors({ ...fieldErrors, [e.target.name]: undefined });
@@ -132,7 +192,7 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return;
+    if (submitLock.current || submitting) return;
     setFormError('');
 
     const errors = validate(form);
@@ -146,6 +206,7 @@ export default function CheckoutPage() {
       return;
     }
 
+    submitLock.current = true;
     setSubmitting(true);
     try {
       const { data } = await api.post('/orders', {
@@ -153,28 +214,39 @@ export default function CheckoutPage() {
         shippingAddress: form,
         paymentMethod,
         promoCode: promoCode || undefined,
-        expectedTotal: quote.totalPrice
+        expectedTotal: quote.totalPrice,
+        idempotencyKey: idempotencyKey.current
       });
 
       const order = data.order;
 
-      // Online payment: order is created as UNPAID. Hand over to PayHere
+      // Online payment (PayHere). The order now exists as unpaid with its stock reserved. The backend signs the
+      // PayHere fields from its own copy of the order; the order only becomes paid when PayHere's server
+      // notification is verified by the backend - never because the browser came back.
       if (paymentMethod === 'CARD' && !order.isPaid) {
-        clearCart();
         try {
-          await startPayHerePayment(order._id);
+          const { data: pay } = await api.post('/payments/payhere/params', { orderId: order._id });
+          rememberPendingOrder(order._id);
+          setRedirecting(true);
+          clearCart();
+          submitPayHereForm(pay); // leaves the site; the page stays locked
         } catch (payErr) {
+          // The order is saved and can be paid later from the cancel page / order history
+          clearCart();
           navigate(`/payment/cancel?order_id=${order._id}&reason=error`, {
             replace: true,
-            state: { message: getErrorMessage(payErr, 'We could not start the payment.') }
+            state: { message: getErrorMessage(payErr, 'We could not start the online payment.') }
           });
         }
+
         return;
       }
 
-      // COD or auto-paid order path
+      // Cash on delivery or an order already paid by the backend.
       clearCart();
-      navigate(`/order-success/${order._id}`, { replace: true });
+      navigate(`/order-success/${order._id}`, {
+        replace: true
+      });
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors) setFieldErrors(data.errors);
@@ -189,6 +261,7 @@ export default function CheckoutPage() {
           ? `${data.message} New total: ${formatPrice(data.quote.totalPrice)}.`
           : getErrorMessage(err, 'We could not place your order.')
       );
+      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -286,8 +359,9 @@ export default function CheckoutPage() {
                   </span>
                 )}
                 {rates.status === 'ready' && rates.list.length === 0 && (
-                  <span className="field-error">We are not delivering to any province right now.</span>
+                  <span className="field-error">Delivery is not set up yet, so orders cannot be placed right now. Please contact the store.</span>
                 )}
+                {provinceHint && !form.province && !fieldErrors.province && <span className="field-hint">{provinceHint}</span>}
               </div>
             </div>
           </section>
@@ -305,14 +379,15 @@ export default function CheckoutPage() {
               <label className={`pay-option${paymentMethod === 'CARD' ? ' is-selected' : ''}`}>
                 <input type="radio" name="payment" value="CARD" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} />
                 <span>
-                  <strong>Credit / Debit Card (PayHere Sandbox)</strong>
-                  <small>Pay securely on PayHere's sandbox checkout page.</small>
+                  <strong>Pay online with PayHere</strong>
+                  <small>Visa, MasterCard and more, on PayHere's secure payment page.</small>
                 </span>
               </label>
             </div>
             {paymentMethod === 'CARD' && (
               <p className="notice notice--info" role="note">
-                Sandbox mode: you will be redirected to PayHere to pay{quote ? ` ${formatMoney(quote.totalPrice, 'LKR')}` : ''} (charged in LKR). No card details are stored here, and your order is marked as paid only after PayHere confirms the payment.
+                You will be redirected to PayHere to pay (in LKR). Your order is marked as paid only after PayHere confirms the payment to our server.
+                {' '}Card details are entered on PayHere's page and never reach this store.
               </p>
             )}
           </section>
@@ -395,7 +470,7 @@ export default function CheckoutPage() {
           >
             {submitting
               ? (paymentMethod === 'CARD' ? 'Redirecting to PayHere...' : 'Placing order...')
-              : paymentMethod === 'CARD' ? 'Place Order & Pay' : 'Place Order'}
+              : paymentMethod === 'CARD' ? 'Place Order & Pay with PayHere' : 'Place Order'}
           </button>
           <Link to="/cart" className="btn btn-outline btn-block">
             Back to Cart

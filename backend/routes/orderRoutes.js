@@ -9,7 +9,7 @@ const { cancelOrder } = require('../utils/orderCancellation');
 const { getEnabledRate } = require('../utils/deliveryRates');
 const { PROVINCES } = require('../config/provinces');
 const { FREE_SHIPPING_ABOVE } = require('../config/shipping');
-
+const { phoneError, postalCodeError } = require('../utils/addressValidation');
 // ---------------------------------------------------------------------------
 // Pricing rules live ONLY on the server. The client never supplies prices.
 // ---------------------------------------------------------------------------
@@ -155,7 +155,8 @@ async function priceCart(items, promoCode, province) {
 
 const text = (value, min, max, label, errors, key) => {
   const v = typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
-  if (v.length < min || v.length > max) errors[key] = `${label} must be between ${min} and ${max} characters`;
+  if (!v) errors[key] = `${label} is required`;
+    else if (v.length < min || v.length > max) errors[key] = `${label} must be between ${min} and ${max} characters`;
   return v;
 };
 
@@ -164,20 +165,18 @@ function parseShippingAddress(raw) {
   const errors = {};
   const address = {
     fullName: text(src.fullName, 2, 100, 'Full name', errors, 'fullName'),
-    phone: text(src.phone, 7, 20, 'Phone number', errors, 'phone'),
-    street: text(src.street, 3, 200, 'Address', errors, 'street'),
+    phone: typeof src.phone === 'string' ? src.phone.trim().replace(/\s+/g, ' ') : '',    street: text(src.street, 3, 200, 'Address', errors, 'street'),
     city: text(src.city, 2, 100, 'City', errors, 'city'),
-    postalCode: text(src.postalCode, 2, 12, 'Postal code', errors, 'postalCode'),
+    postalCode: typeof src.postalCode === 'string' ? src.postalCode.trim() : '',
     country: text(src.country, 2, 100, 'Country', errors, 'country'),
     province: typeof src.province === 'string' ? src.province.trim() : ''
   };
   if (!PROVINCES.includes(address.province)) errors.province = 'Select your delivery province';
-  if (!errors.phone && (!/^[+()\-\s\d]+$/.test(address.phone) || address.phone.replace(/\D/g, '').length < 7)) {
-    errors.phone = 'Enter a valid phone number';
-  }
-  if (!errors.postalCode && !/^[A-Za-z0-9\- ]+$/.test(address.postalCode)) {
-    errors.postalCode = 'Enter a valid postal code';
-  }
+   // Phone and postal code depend on the country (Sri Lanka: 07XXXXXXXX / +947XXXXXXXX / 947XXXXXXXX and 5-digit codes)
+  const phoneProblem = phoneError(address.phone, address.country);
+  if (phoneProblem) errors.phone = phoneProblem;
+  const postalProblem = postalCodeError(address.postalCode, address.country);
+  if (postalProblem) errors.postalCode = postalProblem;
   if (Object.keys(errors).length) {
     throw new HttpError(400, 'Please check your shipping details', { errors });
   }

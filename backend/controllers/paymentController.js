@@ -43,7 +43,14 @@ function getConfig() {
       code: 'PAYHERE_NOT_CONFIGURED'
     });
   }
-  return { merchantId, merchantSecret, sandbox: process.env.PAYHERE_SANDBOX !== 'false' };
+  const sandbox = process.env.PAYHERE_SANDBOX !== 'false';
+  // Sandbox and live must never be mixed up: live payments are only possible on a production deployment.
+  if (!sandbox && process.env.NODE_ENV !== 'production') {
+    throw new HttpError(500, 'Live PayHere payments are only allowed when NODE_ENV=production. Use PAYHERE_SANDBOX=true for local development.', {
+      code: 'PAYHERE_LIVE_BLOCKED'
+    });
+  }
+  return { merchantId, merchantSecret, sandbox };
 }
 
 // The store keeps every price in USD (see frontend config/currency.js: BASE_CURRENCY). PayHere charges in LKR,
@@ -89,6 +96,16 @@ function resolveNotifyUrl(req) {
   return url;
 }
 
+// Live payments need a publicly reachable HTTPS notify_url (PayHere calls it server-to-server) and HTTPS return/cancel pages.
+function assertLiveUrls(urls) {
+  const bad = Object.entries(urls)
+    .filter(([, url]) => !/^https:\/\//i.test(url) || isLocalUrl(url))
+    .map(([name]) => name);
+  if (bad.length) {
+    throw new HttpError(500, `Live PayHere payments need public https URLs (${bad.join(', ')}).`, { code: 'PAYHERE_LIVE_BLOCKED' });
+  }
+}
+
 // PayHere does not append the payment result to return_url/cancel_url, so the order id is added for the return pages
 function withOrderId(rawUrl, orderId) {
   try {
@@ -131,6 +148,17 @@ async function getPayHereParams(req, res) {
   }
   if (order.isPaid) throw new HttpError(409, 'This order has already been paid.', { code: 'ALREADY_PAID' });
   if (order.status === 'Cancelled') throw new HttpError(409, 'This order has been cancelled.', { code: 'ORDER_CANCELLED' });
+  if (order.paymentStatus === 'Chargedback') {
+    throw new HttpError(409, 'This payment was charged back. Please contact the store.', { code: 'CHARGED_BACK' });
+  }
+
+  const notifyUrl = resolveNotifyUrl(req);
+  if (!sandbox) {
+    if (!(process.env.PAYHERE_NOTIFY_URL || '').trim()) {
+      throw new HttpError(500, 'PAYHERE_NOTIFY_URL must be set for live payments.', { code: 'PAYHERE_LIVE_BLOCKED' });
+    }
+    assertLiveUrls({ notify_url: notifyUrl, return_url: returnBase, cancel_url: cancelBase });
+  }
 
   const amount = formatAmount(order.totalPrice * rate);
   if (!(Number(amount) > 0)) throw new HttpError(400, 'This order has no amount to pay.', { code: 'INVALID_AMOUNT' });
@@ -143,7 +171,7 @@ async function getPayHereParams(req, res) {
     merchant_id: merchantId,
     return_url: withOrderId(returnBase, orderId),
     cancel_url: withOrderId(cancelBase, orderId),
-    notify_url: resolveNotifyUrl(req),
+    notify_url: notifyUrl,
     first_name: first,
     last_name: last,
     email: req.user.email,
@@ -160,8 +188,11 @@ async function getPayHereParams(req, res) {
     hash: generateCheckoutHash({ merchantId, merchantSecret, orderId, amount, currency: CURRENCY })
   };
 
-  // Remember exactly what was requested; the notification must match it
-  await Order.updateOne({ _id: order._id, isPaid: false }, { $set: { payhereAmount: Number(amount), payhereCurrency: CURRENCY } });
+  // Remember exactly what was requested (the notification must match it) and mark the payment as pending before the redirect
+  await Order.updateOne(
+    { _id: order._id, isPaid: false },
+    { $set: { payhereAmount: Number(amount), payhereCurrency: CURRENCY, paymentStatus: 'Pending' } }
+  );
 
   res.json({ sandbox, checkoutUrl: sandbox ? CHECKOUT_URLS.sandbox : CHECKOUT_URLS.live, params });
 }

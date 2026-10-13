@@ -2676,7 +2676,10 @@ textarea.form-control {
   font-size: 13px;
   color: var(--danger);
 }
-
+.field-hint {
+  font-size: 13px;
+  color: var(--ink-700);
+}
 .pay-options {
   display: flex;
   flex-direction: column;

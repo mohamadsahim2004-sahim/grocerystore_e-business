@@ -56,8 +56,8 @@ import AdminUserDetail from './pages/AdminUserDetail';
 
 import AdminInventory from './pages/AdminInventory';
 import AdminSupport from './pages/AdminSupport';
+import AdminDeliveryRates from './pages/AdminDeliveryRates';
 
-import PlaceholderPage from './pages/PlaceholderPage';
 
 import AddressesPage from './pages/AddressesPage';
 import SettingsPage from './pages/SettingsPage';
@@ -415,10 +415,7 @@ function MainApp() {
               path="/admin/settings"
               element={
                 <AdminLayout>
-                  <PlaceholderPage
-                    title="Admin Settings"
-                    bare
-                  />
+                  <AdminDeliveryRates />
                 </AdminLayout>
               }
             />

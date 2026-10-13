@@ -1,7 +1,8 @@
 const DeliveryRate = require('../models/DeliveryRate');
-const { PROVINCES, DEFAULT_PROVINCE_CHARGE } = require('../config/provinces');
+const { PROVINCES } = require('../config/provinces');
 
-// Creates any province that has no rate yet, with the placeholder charge. Safe to call concurrently:
+// Creates any province that has no rate yet. The new row is "not configured" (confirmed: false) and is never used
+// to price an order until an administrator saves a charge for it. Safe to call concurrently:
 // $setOnInsert never overwrites a rate an admin has already saved, and `province` is unique.
 async function ensureRates() {
   const existing = await DeliveryRate.find({}, 'province');
@@ -11,7 +12,7 @@ async function ensureRates() {
     missing.map((province) =>
       DeliveryRate.updateOne(
         { province },
-        { $setOnInsert: { province, charge: DEFAULT_PROVINCE_CHARGE, enabled: true, confirmed: false } },
+        { $setOnInsert: { province, charge: 0, enabled: true, confirmed: false } },
         { upsert: true }
       ).catch((err) => {
         if (err.code !== 11000) throw err; // another request created it first
@@ -28,12 +29,12 @@ async function listRates() {
   return PROVINCES.map((p) => byProvince.get(p)).filter(Boolean);
 }
 
-// The rate customers are charged: only a known, enabled province qualifies
+// The rate customers are charged: only a known province that is enabled AND has a charge saved by an admin qualifies
 async function getEnabledRate(province) {
   if (typeof province !== 'string' || !PROVINCES.includes(province)) return null;
   await ensureRates();
   const rate = await DeliveryRate.findOne({ province });
-  return rate && rate.enabled ? rate : null;
+  return rate && rate.enabled && rate.confirmed ? rate : null;
 }
 
 module.exports = { ensureRates, listRates, getEnabledRate };

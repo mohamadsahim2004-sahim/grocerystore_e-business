@@ -1,24 +1,49 @@
-import React, { useContext, useEffect, useState, useCallback } from 'react';
+import React, { useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { StoreContext } from '../context/StoreContext';
 import api, { getErrorMessage } from '../api/client';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { CheckCircleIcon, ImageIcon, AlertIcon } from '../components/Icons';
-import { PAYMENT_LABELS, formatOrderDate, paymentStatusLabel } from '../lib/orderFormat';
+import { PAYMENT_LABELS, formatLkr, formatOrderDate, paymentStatusLabel } from '../lib/orderFormat';
+import { forgetPendingOrder, startPayHerePayment } from '../lib/payhere';
+
+const POLL_MS = 3000;
+const MAX_POLLS = 10; // ~30 s: PayHere's server notification can arrive a moment after the customer is redirected back
+const FAILED_STATES = ['Failed', 'Cancelled', 'Chargedback'];
+const isFailed = (o) => !o.isPaid && (FAILED_STATES.includes(o.paymentStatus) || o.status === 'Cancelled');
+// An online order whose verified PayHere notification has not arrived yet
+const isWaiting = (o) => o.paymentMethod === 'CARD' && !o.isPaid && !isFailed(o);
 
 export default function OrderSuccessPage() {
   const { id } = useParams();
   const { formatPrice } = useContext(StoreContext);
   const [state, setState] = useState({ status: 'loading', order: null, error: '' });
   const [attempt, setAttempt] = useState(0);
+  const polls = useRef(0);
+  const [retrying, setRetrying] = useState(false);
+  const [payError, setPayError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    setState({ status: 'loading', order: null, error: '' });
+    let timer;
+    // Only the first load shows the spinner; background polls leave the page as it is
+    setState((prev) => (prev.order && prev.order._id === id ? prev : { status: 'loading', order: null, error: '' }));
     api
       .get(`/orders/${id}`)
-      .then(({ data }) => !cancelled && setState({ status: 'ready', order: data, error: '' }))
+      .then(({ data }) => {
+        if (cancelled) return;
+        setState({ status: 'ready', order: data, error: '' });
+        if (data.isPaid) {
+          forgetPendingOrder();
+        } else if (isWaiting(data) && polls.current < MAX_POLLS) {
+          // Payment status only ever comes from the backend (set by PayHere's verified notification)
+          timer = setTimeout(() => {
+            polls.current += 1;
+            setAttempt((n) => n + 1);
+          }, POLL_MS);
+        }
+      })
       .catch((err) => {
         if (cancelled) return;
         if (err.response?.status === 404) setState({ status: 'notfound', order: null, error: '' });
@@ -26,10 +51,25 @@ export default function OrderSuccessPage() {
       });
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [id, attempt]);
 
-  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  const retry = useCallback(() => {
+    polls.current = 0;
+    setAttempt((n) => n + 1);
+  }, []);
+
+  const payAgain = async () => {
+    setPayError('');
+    setRetrying(true);
+    try {
+      await startPayHerePayment(id); // leaves the page on success
+    } catch (err) {
+      setPayError(getErrorMessage(err, 'We could not start the payment. Please try again.'));
+      setRetrying(false);
+    }
+  };
 
   if (state.status === 'loading') {
     return (
@@ -55,15 +95,33 @@ export default function OrderSuccessPage() {
 
   const { order } = state;
   const a = order.shippingAddress;
+  const online = order.paymentMethod === 'CARD';
+  const paid = order.isPaid;
+  const failed = isFailed(order);
+  const waiting = isWaiting(order);
+  const timedOut = waiting && polls.current >= MAX_POLLS;
+
+  let hero = { ok: true, title: 'Thank you for your order!', text: 'Your order has been placed successfully.' };
+  if (online && paid) {
+    hero = { ok: true, title: 'Payment successful', text: 'Thank you! PayHere has confirmed your payment and your order has been placed.' };
+  } else if (online && failed) {
+    hero = { ok: false, title: 'Payment not completed', text: 'Your order is saved, but the payment was not completed so it has not been paid.' };
+  } else if (online) {
+    hero = {
+      ok: false,
+      title: 'Order placed - waiting for payment confirmation',
+      text: timedOut
+        ? "We haven't received PayHere's confirmation yet. If you completed the payment it should appear shortly."
+        : 'PayHere confirms payments with our server separately. This page updates automatically.'
+    };
+  }
 
   return (
     <div className="order-success container">
       <div className="order-success__hero">
-        <span className="order-success__icon">
-          <CheckCircleIcon size={44} />
-        </span>
-        <h1>Thank you for your order!</h1>
-        <p>Your order has been placed successfully.</p>
+        <span className="order-success__icon">{hero.ok ? <CheckCircleIcon size={44} /> : <AlertIcon size={44} />}</span>
+        <h1>{hero.title}</h1>
+        <p>{hero.text}</p>
         <p className="order-id">
           Order ID: <strong data-testid="order-id">{order._id}</strong>
         </p>
@@ -124,7 +182,21 @@ export default function OrderSuccessPage() {
               <dd>
                 {PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod} &middot; {paymentStatusLabel(order)}              </dd>
             </div>
+            {online && order.payhereAmount > 0 && (
+              <div>
+                <dt>Online payment amount</dt>
+                <dd>{formatLkr(order.payhereAmount)}</dd>
+              </div>
+            )}
           </dl>
+          {waiting && (
+            <p className="notice notice--info" role="status">
+              Not marked as paid until PayHere's confirmation reaches our server.{' '}
+              <button type="button" className="link-btn" onClick={retry}>
+                Check again
+              </button>
+            </p>
+          )}
           <h3 className="panel__sub">Shipping to</h3>
           <address className="ship-address">
             {a.fullName}
@@ -140,8 +212,18 @@ export default function OrderSuccessPage() {
         </section>
       </div>
 
+      {payError && (
+        <p className="error-msg" role="alert" style={{ textAlign: 'center' }}>
+          {payError}
+        </p>
+      )}
       <div className="order-success__actions">
-        <Link to="/orders" className="btn btn-primary">
+        {online && !paid && order.status !== 'Cancelled' && (failed || timedOut) && (
+          <button type="button" className="btn btn-primary" onClick={payAgain} disabled={retrying}>
+            {retrying ? 'Redirecting to PayHere...' : 'Pay with PayHere'}
+          </button>
+        )}
+        <Link to="/orders" className={`btn ${online && !paid && (failed || timedOut) ? 'btn-outline' : 'btn-primary'}`}>
           View Order History
         </Link>
         <Link to="/shop" className="btn btn-outline">

@@ -1,5 +1,6 @@
-// Existing store rule (unchanged): when the items total is above this amount (base currency) delivery is free.
-// Per-province charges apply to every order at or below it.
+// Orders above this items subtotal receive free delivery.
 const FREE_SHIPPING_ABOVE = 49;
 
-module.exports = { FREE_SHIPPING_ABOVE };
+module.exports = {
+  FREE_SHIPPING_ABOVE
+};
