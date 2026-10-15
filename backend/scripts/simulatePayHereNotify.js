@@ -16,6 +16,7 @@
 require('dotenv').config();
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const { getMongoUri, getMongoConnectOptions } = require('../utils/dbDiagnostics');
 
 if (process.env.NODE_ENV !== 'development') {
   console.error('Refusing to run: the simulator only works with NODE_ENV=development (set it in backend/.env).');
@@ -38,7 +39,7 @@ const statusCode = STATUS_CODES[outcome] || outcome;
 const merchantId = (process.env.PAYHERE_MERCHANT_ID || '').trim();
 const secret = (process.env.PAYHERE_MERCHANT_SECRET || '').trim();
 
-if (!orderId || !/^-?\d+$/.test(statusCode) || !merchantId || !secret) {
+if (!orderId || !/^-?\d+\$/.test(statusCode) || !merchantId || !secret) {
   console.error('Usage: node scripts/simulatePayHereNotify.js <orderId> [success|pending|cancelled|failed|chargedback|<status_code>] [--amount=<LKR>] [--bad-sig]');
   console.error('PAYHERE_MERCHANT_ID and PAYHERE_MERCHANT_SECRET must be set in backend/.env');
   process.exit(1);
@@ -48,7 +49,7 @@ const md5Upper = (v) => crypto.createHash('md5').update(String(v)).digest('hex')
 
 async function amountFor(id) {
   if (amountFlag) return Number(amountFlag);
-  await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/exotic_store');
+  await mongoose.connect(getMongoUri(), getMongoConnectOptions());
   try {
     const order = await require('../models/Order').findById(id, 'payhereAmount');
     return order ? order.payhereAmount : undefined;

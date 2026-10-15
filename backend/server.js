@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const { isDbConnected, formatDbFailure } = connectDB;
 
 // Check required secrets on boot
 if (!process.env.JWT_SECRET) {
@@ -23,7 +24,6 @@ const supportRoutes = require('./routes/supportRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
-connectDB();
 
 // Configurable CORS origins
 const allowedOrigins = (process.env.CORS_ORIGIN || '')
@@ -44,7 +44,14 @@ app.use((req, res, next) => {
 });
 
 // Health check endpoint
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+// Reports the real database state: 200 only when MongoDB is connected, otherwise 503.
+app.get('/api/health', (req, res) => {
+  const connected = isDbConnected();
+  res.status(connected ? 200 : 503).json({
+    status: connected ? 'ok' : 'degraded',
+    database: connected ? 'connected' : 'disconnected'
+  });
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -64,4 +71,17 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
+
+// Connect to the database FIRST. The server only starts listening (and only says it is running) once MongoDB is
+// connected, so a failed connection is never reported as a healthy start.
+async function start() {
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error(formatDbFailure(error, error.uriInfo));
+    process.exit(1);
+  }
+  app.listen(PORT, () => console.log(`Backend server running on port ${PORT} (database connected)`));
+}
+
+start();
