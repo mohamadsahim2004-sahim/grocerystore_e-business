@@ -132,6 +132,7 @@ export default function Header() {
 
         <BrandLogo
           variant="wordmark"
+          tone="dark"
           onClick={() => {
             homeProps.onClick();
             setMenuOpen(false);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import EmptyState from './EmptyState';
 import LoadingSpinner from './LoadingSpinner';
@@ -13,23 +13,65 @@ import {
   FrozenIcon,
   OilIcon,
   BagIcon,
-  AlertIcon
+  AlertIcon,
+  SproutIcon,
+  PulsesIcon,
+  CoconutIcon,
+  MilkIcon,
+  BreadIcon,
+  FishIcon,
+  MeatIcon,
+  FlourIcon,
+  CanIcon,
+  NoodleIcon
 } from './Icons';
 
 // Icons are only decoration; the category list itself always comes from the API.
-const SLUG_ICONS = {
-  'rice-grains': GrainIcon,
-  'fruits-vegetables': FruitVegIcon,
-  'spices-herbs': SpiceIcon,
-  'snacks-sweets': SnackIcon,
-  beverages: BeverageIcon,
-  'household-care': HouseholdIcon,
-  'frozen-foods': FrozenIcon,
-  'oils-ghee': OilIcon
-};
+// Rules are checked in order against the category slug + name, so new categories
+// added in the admin panel pick a sensible icon (and fall back to the bag icon).
+const ICON_RULES = [
+  [/\b(noodles?|pasta)\b/, NoodleIcon],
+  [/\b(canned|tinned|packaged)\b/, CanIcon],
+  [/\b(flour|baking)\b/, FlourIcon],
+  [/\b(bakery|bread|pastr(y|ies)|short eats)\b/, BreadIcon],
+  [/\b(meat|poultry|chicken|beef|mutton)\b/, MeatIcon],
+  [/\b(fish|seafood|prawns?)\b/, FishIcon],
+  [/\b(milk|dairy|cheese|yogh?urt)\b/, MilkIcon],
+  [/\b(tea|coffee|beverages?|drinks?|juices?)\b/, BeverageIcon],
+  [/\bcoconut\b/, CoconutIcon],
+  [/\b(dhal|dal|pulses?|beans?|lentils?|legumes?)\b/, PulsesIcon],
+  [/\b(rice|grains?|cereals?)\b/, GrainIcon],
+  [/\bfruits?\b/, FruitVegIcon],
+  [/\b(vegetables?|veggies|greens)\b/, SproutIcon],
+  [/\b(spices?|seasonings?|herbs?|masala|curry)\b/, SpiceIcon],
+  [/\b(snacks?|sweets?|confectionery|biscuits?|chocolates?)\b/, SnackIcon],
+  [/\b(oils?|ghee|butter)\b/, OilIcon],
+  [/\b(household|cleaning|care)\b/, HouseholdIcon],
+  [/\bfrozen\b/, FrozenIcon]
+];
+
+const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+export function getCategoryIcon(category) {
+  const text = `${normalize(category.slug)} ${normalize(category.name)}`;
+  const match = ICON_RULES.find(([pattern]) => pattern.test(text));
+  return match ? match[1] : BagIcon;
+}
+
+// The shop filters by slug, so a slug (or an identical name) can only be shown once.
+function uniqueCategories(categories) {
+  const seen = new Set();
+  return categories.filter((category) => {
+    const keys = [`slug:${normalize(category.slug)}`, `name:${normalize(category.name)}`];
+    if (keys.some((key) => seen.has(key))) return false;
+    keys.forEach((key) => seen.add(key));
+    return true;
+  });
+}
 
 export default function CategoryTiles({ hideWhenEmpty = false }) {
   const { categories, loading, error, reload } = useCategories();
+  const items = useMemo(() => uniqueCategories(categories), [categories]);
 
   if (loading) return <LoadingSpinner size="sm" label="Loading categories..." />;
   if (error) {
@@ -42,15 +84,15 @@ export default function CategoryTiles({ hideWhenEmpty = false }) {
       />
     );
   }
-  if (categories.length === 0) {
+  if (items.length === 0) {
     if (hideWhenEmpty) return null;
     return <EmptyState title="No categories yet" message="Please check back soon." action={{ label: 'Browse the shop', to: '/shop' }} />;
   }
 
   return (
     <ul className="category-grid">
-      {categories.map((category) => {
-        const Icon = SLUG_ICONS[category.slug] || BagIcon;
+      {items.map((category) => {
+        const Icon = getCategoryIcon(category);
         return (
           <li key={category._id || category.slug}>
             <Link to={`/shop/${category.slug}`} className="category-tile">

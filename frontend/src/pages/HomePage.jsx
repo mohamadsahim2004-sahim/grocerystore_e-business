@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 import useFeaturedProducts from '../hooks/useFeaturedProducts';
-import heroArt from '../assets/hero-produce.svg';
+import heroArt from '../assets/banner_2.jpg';
 import CategoryTiles from '../components/CategoryTiles';
 import {
   ShieldCheckIcon,

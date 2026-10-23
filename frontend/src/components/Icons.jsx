@@ -235,6 +235,90 @@ export const OilIcon = (p) => (
   </Icon>
 );
 
+export const SproutIcon = (p) => (
+  <Icon {...p}>
+    <path d="M12 21v-9" />
+    <path d="M12 12c0-4 2.5-6.5 7.5-6.5 0 4-2.7 6.5-7.5 6.5z" />
+    <path d="M12 15.5c0-3.2-2.1-5.3-6.5-5.3 0 3.2 2.2 5.3 6.5 5.3z" />
+  </Icon>
+);
+
+export const PulsesIcon = (p) => (
+  <Icon {...p}>
+    <path d="M20 4c-4.6.3-8.3 2-11.1 5S4.3 15.4 4 20c4.6-.3 8.3-2 11.1-5S19.7 8.6 20 4z" />
+    <circle cx="9.6" cy="14.4" r="1.1" />
+    <circle cx="12.6" cy="11.4" r="1.1" />
+    <circle cx="15.6" cy="8.4" r="1.1" />
+  </Icon>
+);
+
+export const CoconutIcon = (p) => (
+  <Icon {...p}>
+    <ellipse cx="12" cy="9.5" rx="8.5" ry="3" />
+    <path d="M3.5 9.5c0 5.2 3.8 9.5 8.5 9.5s8.5-4.3 8.5-9.5" />
+    <path d="M12 3.2c.2-.9.9-1.5 1.8-1.7M12 3.2c-.2-.9-.9-1.5-1.8-1.7" />
+    <path d="M8 14.2c1.2.9 2.6 1.3 4 1.3s2.8-.4 4-1.3" />
+  </Icon>
+);
+
+export const MilkIcon = (p) => (
+  <Icon {...p}>
+    <path d="M8.5 2.5h7l1.5 4.5v12.5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V7z" />
+    <path d="M7 7h10" />
+    <path d="M10 12.2h4v4.3h-4z" />
+  </Icon>
+);
+
+export const BreadIcon = (p) => (
+  <Icon {...p}>
+    <path d="M4 11a3.6 3.6 0 0 1 2.4-6.4h11.2A3.6 3.6 0 0 1 20 11v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z" />
+    <path d="M9 8.5 10.5 11M13.5 8.5 15 11" />
+  </Icon>
+);
+
+export const FishIcon = (p) => (
+  <Icon {...p}>
+    <path d="M2.5 12c2.6-4.6 7.2-6.2 11-4l4.5 4-4.5 4c-3.8 2.2-8.4.6-11-4z" />
+    <path d="M18 12l3.5-3.6v7.2z" />
+    <circle cx="7.6" cy="11.4" r=".9" fill="currentColor" />
+  </Icon>
+);
+
+export const MeatIcon = (p) => (
+  <Icon {...p}>
+    <path d="M14.2 4.6a6 6 0 0 1 5.3 5.4c.3 3-2 5.6-4.7 5.8L8.7 9.7c.3-2.5 2.9-5.4 5.5-5.1z" />
+    <path d="M8.7 15.3 5.4 18.6" />
+    <circle cx="4.4" cy="17.6" r="1.3" />
+    <circle cx="6.4" cy="19.6" r="1.3" />
+  </Icon>
+);
+
+export const FlourIcon = (p) => (
+  <Icon {...p}>
+    <path d="M8.5 3h7l-1 3.2c2.9 1.9 4.1 5.2 4.1 9.3a4.5 4.5 0 0 1-4.5 4.5H9.9a4.5 4.5 0 0 1-4.5-4.5c0-4.1 1.2-7.4 4.1-9.3z" />
+    <path d="M8.8 6.2h6.4" />
+    <path d="M12 17.5v-5" />
+    <path d="M12 14.5c-1.6 0-2.4-.9-2.4-2.3 1.6 0 2.4.9 2.4 2.3zM12 14.5c1.6 0 2.4-.9 2.4-2.3-1.6 0-2.4.9-2.4 2.3z" />
+  </Icon>
+);
+
+export const CanIcon = (p) => (
+  <Icon {...p}>
+    <ellipse cx="12" cy="6" rx="6.5" ry="2.5" />
+    <path d="M5.5 6v12c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5V6" />
+    <path d="M5.5 12c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5" />
+  </Icon>
+);
+
+export const NoodleIcon = (p) => (
+  <Icon {...p}>
+    <path d="M3.5 12.5h17a8.5 8.5 0 0 1-17 0z" />
+    <path d="M9.5 21h5" />
+    <path d="M13 3.5l3.6 7.5M16.5 3l3 8" />
+    <path d="M6.5 12c0-1.6 1.5-1.6 1.5-3.2S6.5 7.2 6.5 5.6" />
+  </Icon>
+);
+
 /* Trust strip icons */
 export const ShieldCheckIcon = (p) => (
   <Icon {...p}>
