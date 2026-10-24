@@ -18,7 +18,8 @@ const adminSupportRoutes = require('./adminSupportRoutes');
 // Every route below this line requires a valid, logged-in admin.
 router.use(protect, authorize('admin'));
 
-const SALES_OVERVIEW_DAYS = 14;
+const LOW_STOCK_THRESHOLD = 5; // keep equal to LOW_STOCK_THRESHOLD in adminInventoryRoutes.js
+const SALES_OVERVIEW_DAYS = 14; // days shown in the dashboard sales chart (today + previous 13)
 
 // @desc    Dashboard metrics: totals, pending orders, revenue, recent orders, sales trend
 // @route   GET /api/admin/dashboard
@@ -31,11 +32,12 @@ router.get(
     since.setUTCDate(since.getUTCDate() - (SALES_OVERVIEW_DAYS - 1));
     since.setUTCHours(0, 0, 0, 0);
 
-    const [
+       const [
       totalProducts,
       totalOrders,
       totalUsers,
       pendingOrders,
+      lowStockProducts,          // <-- NEW
       revenueAgg,
       recentOrders,
       recentOrdersForChart
@@ -44,10 +46,10 @@ router.get(
       Order.countDocuments({}),
       User.countDocuments({}),
       Order.countDocuments({ status: 'Pending' }),
+      // NEW: active products that are running low but not yet sold out
+      Product.countDocuments({ isActive: { $ne: false }, stock: { $gt: 0, $lte: LOW_STOCK_THRESHOLD } }),
       Order.aggregate([{ $match: { status: { $ne: 'Cancelled' } } }, { $group: { _id: null, total: { $sum: '$totalPrice' } } }]),
       Order.find({}).populate('user', 'name email').sort({ createdAt: -1 }).limit(5),
-      // Grouped by day in JS rather than with $dateToString: a plain find + reduce works
-      // identically on every MongoDB-compatible deployment, including limited ones.
       Order.find({ createdAt: { $gte: since }, status: { $ne: 'Cancelled' } }, 'createdAt totalPrice')
     ]);
 
@@ -76,6 +78,7 @@ router.get(
         totalOrders,
         totalUsers,
         pendingOrders,
+        lowStockProducts,        // <-- NEW
         revenue: Math.round((revenueAgg[0]?.total || 0) * 100) / 100
       },
       recentOrders,

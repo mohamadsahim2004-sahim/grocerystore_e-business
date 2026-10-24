@@ -129,6 +129,7 @@ export default function AdminInventory() {
                         step="1"
                         className="form-control"
                         placeholder={String(item.stock)}
+                        aria-label={`New stock for ${item.name}`}
                         value={drafts[item._id] ?? ''}
                         onChange={(e) => setDrafts((prev) => ({ ...prev, [item._id]: e.target.value }))}
                       />

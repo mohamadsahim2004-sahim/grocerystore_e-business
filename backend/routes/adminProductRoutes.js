@@ -7,6 +7,13 @@ const { HttpError, handle } = require('../utils/httpError');
 const { uniqueSlug } = require('../utils/slugify');
 
 const NUM_FIELDS = ['price', 'oldPrice', 'stock', 'rating', 'reviewCount'];
+// Images are stored as plain URL strings (local /images/... paths or http(s) URLs): `image` is the main picture and
+// `images` holds extra gallery pictures. A product may show at most 3 pictures in total.
+const MAX_PRODUCT_IMAGES = 3;
+const MAX_IMAGE_URL_LENGTH = 2048;
+const IMAGE_URL_PATTERN = /^(https?:\/\/\S+|\/(?!\/).+)$/i;
+const isValidImageUrl = (value) => value.length <= MAX_IMAGE_URL_LENGTH && IMAGE_URL_PATTERN.test(value);
+
 const STR_FIELDS = ['name', 'description', 'shortDescription', 'brand', 'image', 'unit', 'origin'];
 
 function readBody(body, { partial } = { partial: false }) {
@@ -43,7 +50,17 @@ function readBody(body, { partial } = { partial: false }) {
     errors.oldPrice = 'Old price must be greater than the current price';
   }
 
-  if (Array.isArray(body.images)) data.images = body.images.map(String).filter(Boolean);
+  if (Array.isArray(body.images)) data.images = [...new Set(body.images.map((v) => String(v).trim()).filter(Boolean))];
+
+  // Image checks: valid URL/path format and a maximum of 3 distinct pictures (main + gallery)
+  if (data.image && !isValidImageUrl(data.image)) errors.image = 'Image must be an http(s) URL or a path starting with /';
+  if (data.images && data.images.some((url) => !isValidImageUrl(url))) {
+    errors.images = 'Each extra image must be an http(s) URL or a path starting with /';
+  }
+  if (!errors.image && !errors.images && (data.image || data.images)) {
+    const gallery = new Set([data.image, ...(data.images || [])].filter(Boolean));
+    if (gallery.size > MAX_PRODUCT_IMAGES) errors.images = `A product can have at most ${MAX_PRODUCT_IMAGES} images`;
+  }
   if (body.isFeatured !== undefined) data.isFeatured = Boolean(body.isFeatured);
   if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
   if (typeof body.slug === 'string' && body.slug.trim()) data.slug = body.slug.trim();

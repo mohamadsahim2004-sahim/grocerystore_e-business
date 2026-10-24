@@ -116,7 +116,7 @@ export default function AdminOrders() {
       )}
 
       <div className="admin-toolbar">
-        <select className="form-control" value={status} onChange={(e) => setFilter(e.target.value)}>
+        <select className="form-control" aria-label="Filter orders by status" value={status} onChange={(e) => setFilter(e.target.value)}>
           <option value="">All statuses</option>
           {STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -180,6 +180,7 @@ export default function AdminOrders() {
                             className={`status-pill status-pill--${order.status.toLowerCase()} status-pill--select`}
                             value={order.status}
                             disabled={isBusy}
+                            aria-label={`Update status for order ${order._id.slice(-8).toUpperCase()}`}
                             onChange={(e) => handleStatusChange(order, e.target.value)}
                           >
                             <option value={order.status} disabled>

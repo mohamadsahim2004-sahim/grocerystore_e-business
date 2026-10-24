@@ -40,38 +40,53 @@ export default function OrderHistoryPage() {
 
       {state.status === 'ready' && state.orders.length > 0 && (
         <ul className="order-list">
-          {state.orders.map((order) => (
-            <li key={order._id} className="order-card" data-testid="order-card">
-              <div className="order-card__head">
-                <div>
-                  <span className="order-card__label">Order ID</span>
-                  <strong className="order-card__id">{order._id}</strong>
+          {state.orders.map((order) => {
+            const status = order.status || 'Pending';
+            const items = order.orderItems || [];
+            const visibleItems = items.slice(0, 3);
+            const hiddenCount = items.length - visibleItems.length;
+            return (
+              <li key={order._id} className="order-card" data-testid="order-card">
+                <div className="order-card__head">
+                  <div>
+                    <span className="order-card__label">Order ID</span>
+                    <strong className="order-card__id" title={order._id}>
+                      #{String(order._id).slice(-8).toUpperCase()}
+                    </strong>
+                  </div>
+                  <div className="order-card__date">
+                    <span className="order-card__label">Placed on</span>
+                    <span>{formatOrderDate(order.createdAt) || '\u2014'}</span>
+                  </div>
+                  <span className={`status-pill status-pill--${status.toLowerCase()}`}>{status}</span>
                 </div>
-                <span className={`status-pill status-pill--${order.status.toLowerCase()}`}>{order.status}</span>
-              </div>
-              <p className="order-card__meta">
-                {formatOrderDate(order.createdAt)} &middot; {PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}
-                {order.isPaid ? ' · Paid' : ''}
-              </p>
-              <ul className="order-card__items">
-                {order.orderItems.map((item) => (
-                  <li key={item.product}>
-                    <span className="summary-items__img">{item.image ? <img src={item.image} alt="" /> : <ImageIcon size={22} />}</span>
-                    <span>
-                      {item.name} <small>× {item.quantity}</small>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="order-card__foot">
-                <span>Total</span>
-                <strong>{formatPrice(order.totalPrice)}</strong>
-              </div>
-              <Link to={`/orders/${order._id}`} className="btn btn-outline order-card__details">
-                View Details
-              </Link>
-            </li>
-          ))}
+                <p className="order-card__meta">
+                  {PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}
+                  {order.isPaid ? ' · Paid' : ''}
+                </p>
+                <ul className="order-card__items">
+                  {visibleItems.map((item, index) => (
+                    <li key={`${item.product}-${index}`}>
+                      <span className="summary-items__img">{item.image ? <img src={item.image} alt="" /> : <ImageIcon size={22} />}</span>
+                      <span>
+                        {item.name} <small>× {item.quantity}</small>
+                      </span>
+                    </li>
+                  ))}
+                  {hiddenCount > 0 && <li className="order-card__more">+ {hiddenCount} more {hiddenCount === 1 ? 'item' : 'items'}</li>}
+                </ul>
+                <div className="order-card__foot">
+                  <div>
+                    <span className="order-card__label">Total</span>
+                    <strong className="order-card__total">{formatPrice(order.totalPrice)}</strong>
+                  </div>
+                  <Link to={`/orders/${order._id}`} className="btn btn-outline order-card__details">
+                    View Details
+                  </Link>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 

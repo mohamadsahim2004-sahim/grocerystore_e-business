@@ -81,10 +81,11 @@ export default function AdminProducts() {
           type="search"
           className="form-control"
           placeholder="Search by name..."
+          aria-label="Search products by name"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select className="form-control" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+        <select className="form-control" aria-label="Filter by category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
           <option value="">All categories</option>
           {categories.map(([id, name]) => (
             <option key={id} value={id}>
@@ -92,6 +93,9 @@ export default function AdminProducts() {
             </option>
           ))}
         </select>
+        <span className="admin-toolbar__count">
+          {filtered.length} {filtered.length === 1 ? 'product' : 'products'}
+        </span>
       </div>
 
       {actionError && (
@@ -120,7 +124,7 @@ export default function AdminProducts() {
                 <tr key={p._id}>
                   <td>
                     <div className="admin-cell-media">
-                      <span className="admin-thumb">{p.image ? <img src={p.image} alt="" /> : <ImageIcon size={18} />}</span>
+                      <span className="admin-thumb">{p.image ? <img src={p.image} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <ImageIcon size={18} />}</span>
                       <span>{p.name}</span>
                     </div>
                   </td>

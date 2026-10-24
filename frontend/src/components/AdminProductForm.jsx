@@ -2,6 +2,47 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api, { getErrorMessage } from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { ImageIcon } from '../components/Icons';
+
+// Products keep their pictures as plain URL strings: `image` is the main one, `images` the extra gallery pictures.
+// The form edits them as one ordered list (first = main image), up to MAX_IMAGES in total.
+const MAX_IMAGES = 3;
+const IMAGE_URL_PATTERN = /^(https?:\/\/\S+|\/(?!\/).+)$/i;
+const cleanImages = (urls) => [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
+
+function ImageSlot({ index, value, error, onChange, onRemove, canRemove }) {
+  const [broken, setBroken] = useState(false);
+  useEffect(() => setBroken(false), [value]);
+  const url = value.trim();
+  const label = index === 0 ? 'Main image URL' : `Extra image ${index} URL`;
+  return (
+    <div className="image-field__row">
+      <span className="image-field__preview" aria-hidden="true">
+        {url && !broken ? <img src={url} alt="" onError={() => setBroken(true)} /> : <ImageIcon size={22} />}
+      </span>
+      <div className="image-field__input">
+        <label htmlFor={`p-image-${index}`}>
+          {label}
+          {index === 0 && ' (required)'}
+        </label>
+        <input
+          id={`p-image-${index}`}
+          className={`form-control${error ? ' has-error' : ''}`}
+          value={value}
+          onChange={(e) => onChange(index, e.target.value)}
+          placeholder="/images/products/example.webp or https://..."
+        />
+        {error && <span className="field-error">{error}</span>}
+        {!error && broken && <span className="field-error">This image could not be loaded. Check the URL.</span>}
+      </div>
+      {canRemove && (
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => onRemove(index)} aria-label={`Remove ${label}`}>
+          Remove
+        </button>
+      )}
+    </div>
+  );
+}
 
 const EMPTY = {
   name: '',
@@ -13,7 +54,6 @@ const EMPTY = {
   unit: '',
   brand: '',
   origin: '',
-  image: '',
   description: '',
   shortDescription: '',
   isFeatured: false,
@@ -27,6 +67,8 @@ export default function AdminProductForm() {
 
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(EMPTY);
+  const [imageUrls, setImageUrls] = useState(['']);
+  const [imageErrors, setImageErrors] = useState({});
   const [loading, setLoading] = useState(isEdit);
   const [loadError, setLoadError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -62,12 +104,14 @@ export default function AdminProductForm() {
           unit: data.unit || '',
           brand: data.brand || '',
           origin: data.origin || '',
-          image: data.image || '',
           description: data.description || '',
           shortDescription: data.shortDescription || '',
           isFeatured: Boolean(data.isFeatured),
           isActive: data.isActive !== false
         });
+        // Older products may only have `image`; combine it with any extra gallery images (max 3)
+        const existing = cleanImages([data.image || '', ...(data.images || [])]).slice(0, MAX_IMAGES);
+        setImageUrls(existing.length ? existing : ['']);
       })
       .catch((err) => !cancelled && setLoadError(getErrorMessage(err, 'Could not load this product.')))
       .finally(() => !cancelled && setLoading(false));
@@ -82,12 +126,40 @@ export default function AdminProductForm() {
     if (fieldErrors[name]) setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  const handleImageChange = (index, value) => {
+    setImageUrls((prev) => prev.map((u, i) => (i === index ? value : u)));
+    setImageErrors({});
+    if (fieldErrors.image || fieldErrors.images) setFieldErrors((prev) => ({ ...prev, image: undefined, images: undefined }));
+  };
+  const addImageSlot = () => setImageUrls((prev) => (prev.length < MAX_IMAGES ? [...prev, ''] : prev));
+  const removeImageSlot = (index) => {
+    setImageUrls((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : ['']));
+    setImageErrors({});
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+
+    // Validate images before sending: at least one, valid URL/path format, no more than 3 distinct pictures
+    const cleaned = cleanImages(imageUrls);
+    const nextImageErrors = {};
+    if (!cleaned.length) nextImageErrors[0] = 'At least one image is required';
+    imageUrls.forEach((u, i) => {
+      const v = u.trim();
+      if (v && !IMAGE_URL_PATTERN.test(v)) nextImageErrors[i] = 'Use an http(s) URL or a path starting with /';
+    });
+    if (Object.keys(nextImageErrors).length) {
+      setImageErrors(nextImageErrors);
+      setFormError('Please check the highlighted fields');
+      return;
+    }
+
     setSaving(true);
     const payload = {
       ...form,
+      image: cleaned[0],
+      images: cleaned.slice(1, MAX_IMAGES),
       price: form.price === '' ? undefined : Number(form.price),
       oldPrice: form.oldPrice === '' ? '' : Number(form.oldPrice),
       stock: form.stock === '' ? undefined : Number(form.stock)
@@ -180,11 +252,27 @@ export default function AdminProductForm() {
             <input id="p-origin" name="origin" className="form-control" value={form.origin} onChange={handleChange} />
           </div>
 
-          <div className="form-group form-group--wide">
-            <label htmlFor="p-image">Image URL</label>
-            <input id="p-image" name="image" className={`form-control${fieldErrors.image ? ' has-error' : ''}`} value={form.image} onChange={handleChange} placeholder="/images/products/example.svg" required />
-            {fieldErrors.image && <span className="field-error">{fieldErrors.image}</span>}
-          </div>
+          <fieldset className="form-group form-group--wide image-field">
+            <legend>Product images (1&ndash;{MAX_IMAGES})</legend>
+            <p className="admin-muted">The first image is the main picture shown in the shop. Extra images appear as thumbnails on the product page.</p>
+            {imageUrls.map((url, index) => (
+              <ImageSlot
+                key={index}
+                index={index}
+                value={url}
+                error={imageErrors[index] || (index === 0 ? fieldErrors.image : undefined)}
+                onChange={handleImageChange}
+                onRemove={removeImageSlot}
+                canRemove={imageUrls.length > 1}
+              />
+            ))}
+            {fieldErrors.images && <span className="field-error">{fieldErrors.images}</span>}
+            {imageUrls.length < MAX_IMAGES && (
+              <button type="button" className="btn btn-outline btn-sm image-field__add" onClick={addImageSlot}>
+                + Add another image
+              </button>
+            )}
+          </fieldset>
 
           <div className="form-group form-group--wide">
             <label htmlFor="p-shortDescription">Short Description</label>

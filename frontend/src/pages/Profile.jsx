@@ -149,6 +149,14 @@ export default function Profile() {
   const fileInputRef =
     useRef(null);
 
+  // Falls back to the initial-letter avatar when the saved photo cannot be loaded
+  const [avatarBroken, setAvatarBroken] =
+    useState(false);
+
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [user?.avatar]);
+
   // Load profile.
   useEffect(() => {
     let cancelled = false;
@@ -391,17 +399,50 @@ export default function Profile() {
             file
           );
 
+        // Show the chosen photo as a preview; nothing is saved until the user confirms.
         setPhotoPreview(
           prepared
         );
+      } catch (err) {
+        setPhotoPreview('');
 
-        setPhotoProgress(0);
+        setStatus({
+          type: 'error',
+          text:
+            err?.message ||
+            'Could not read that photo.'
+        });
+      } finally {
+        setPhotoProgress(null);
+        setPhotoBusy(false);
+      }
+    };
 
+  const handleSavePhoto =
+    async () => {
+      if (
+        !photoPreview ||
+        photoBusy
+      ) {
+        return;
+      }
+
+      setStatus({
+        type: '',
+        text: ''
+      });
+
+      setPhotoBusy(true);
+      setPhotoProgress(0);
+
+      try {
         await updateAvatar(
-          prepared
+          photoPreview
         );
 
         setPhotoProgress(100);
+
+        setPhotoPreview('');
 
         setStatus({
           type: 'success',
@@ -409,6 +450,7 @@ export default function Profile() {
             'Profile photo updated!'
         });
       } catch (err) {
+        // Keep the preview so the user can retry
         setStatus({
           type: 'error',
           text:
@@ -416,10 +458,18 @@ export default function Profile() {
             'Could not update profile photo.'
         });
       } finally {
-        setPhotoPreview('');
         setPhotoProgress(null);
         setPhotoBusy(false);
       }
+    };
+
+  const handleCancelPhoto =
+    () => {
+      if (photoBusy) {
+        return;
+      }
+
+      setPhotoPreview('');
     };
 
   const handleRemovePhoto =
@@ -485,13 +535,19 @@ export default function Profile() {
           aria-hidden="true"
         >
           {photoPreview ||
-          user?.avatar ? (
+          (user?.avatar &&
+            !avatarBroken) ? (
             <img
               src={
                 photoPreview ||
                 user.avatar
               }
               alt=""
+              onError={() =>
+                setAvatarBroken(
+                  true
+                )
+              }
             />
           ) : (
             displayName
@@ -562,12 +618,40 @@ export default function Profile() {
               'preparing'
               ? 'Preparing photo...'
               : 'Uploading photo...'
-            : user?.avatar
-              ? 'Change photo'
-              : 'Add photo'}
+            : photoPreview
+              ? 'Choose another'
+              : user?.avatar
+                ? 'Change photo'
+                : 'Add photo'}
         </button>
 
-        {user?.avatar && (
+        {photoPreview &&
+          !photoBusy && (
+            <>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={
+                  handleSavePhoto
+                }
+              >
+                Save photo
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={
+                  handleCancelPhoto
+                }
+              >
+                Cancel
+              </button>
+            </>
+          )}
+
+        {user?.avatar &&
+          !photoPreview && (
           <button
             type="button"
             className="btn btn-outline btn-sm"
@@ -610,10 +694,9 @@ export default function Profile() {
         )}
 
         <span className="profile-photo__hint">
-          JPEG, PNG or WebP.
-          Your photo is resized
-          automatically and saved
-          to your account.
+          {photoPreview
+            ? 'Previewing your new photo. Press Save photo to keep it.'
+            : 'JPEG, PNG or WebP. Your photo is resized automatically and saved to your account.'}
         </span>
       </div>
 

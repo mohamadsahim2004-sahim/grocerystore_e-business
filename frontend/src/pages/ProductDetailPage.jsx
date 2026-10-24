@@ -118,7 +118,8 @@ export default function ProductDetailPage() {
   }
 
   // Ready State Calculations
-  const images = [...new Set([product.image, ...(product.images || [])].filter(Boolean))];
+  // Main image first, then extras; ignore blank/non-string values and show at most 3 (older products may only have `image`)
+  const images = [...new Set([product.image, ...(product.images || [])].filter((src) => typeof src === 'string' && src.trim()))].slice(0, 3);
   const currentImage = images[Math.min(activeImage, images.length - 1)];
   const hasStockInfo = typeof product.stock === 'number';
   const outOfStock = hasStockInfo && product.stock <= 0;
@@ -187,18 +188,19 @@ export default function ProductDetailPage() {
             </button>
             {currentImage && !failedImages[currentImage] ? (
               <img
+                key={currentImage}
                 src={currentImage}
                 alt={product.name}
                 onError={() => setFailedImages((prev) => ({ ...prev, [currentImage]: true }))}
               />
             ) : (
-              <span className="product-card__placeholder" aria-hidden="true">
+              <span className="product-card__placeholder" role="img" aria-label="Image not available">
                 <ImageIcon size={72} />
               </span>
             )}
           </div>
 
-          {images.length > 0 && (
+          {images.length > 1 && (
             <ul className="pdp-thumbs" aria-label="Product images">
               {images.map((src, index) => (
                 <li key={src}>
@@ -209,7 +211,11 @@ export default function ProductDetailPage() {
                     aria-current={index === activeImage ? 'true' : undefined}
                     onClick={() => setActiveImage(index)}
                   >
-                    {failedImages[src] ? <ImageIcon size={24} /> : <img src={src} alt="" loading="lazy" />}
+                    {failedImages[src] ? (
+                      <ImageIcon size={24} />
+                    ) : (
+                      <img src={src} alt="" loading="lazy" onError={() => setFailedImages((prev) => ({ ...prev, [src]: true }))} />
+                    )}
                   </button>
                 </li>
               ))}

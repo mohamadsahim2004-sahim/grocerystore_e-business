@@ -34,6 +34,7 @@ const ICON_BY_METRIC = {
   totalOrders: PackageIcon,
   totalUsers: UsersIcon,
   pendingOrders: PackageIcon,
+  lowStockProducts: AlertIcon,   // add this line
   revenue: PackageIcon
 };
 
@@ -363,6 +364,14 @@ export default function AdminDashboard() {
       value:
         Number(
           metrics.pendingOrders
+        ) || 0
+    },
+    {
+      key: 'lowStockProducts',
+      label: 'Low Stock',
+      value:
+        Number(
+          metrics.lowStockProducts
         ) || 0
     },
     {
