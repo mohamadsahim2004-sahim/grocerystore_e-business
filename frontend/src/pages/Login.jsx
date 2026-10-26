@@ -49,6 +49,11 @@ export default function Login() {
           {submitting ? 'Signing in...' : 'Login'}
         </button>
       </form>
+      <p>
+        <Link to="/forgot-password">
+          Forgot Password?
+        </Link>
+      </p>
       <p>Don't have an account? <Link to="/register" state={location.state}>Register here</Link></p>
     </div>
   );

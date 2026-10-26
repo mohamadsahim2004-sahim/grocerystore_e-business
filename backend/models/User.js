@@ -28,7 +28,11 @@ const userSchema = new mongoose.Schema(
     // Deactivated accounts cannot log in and their tokens stop working (see authMiddleware)
     isActive: { type: Boolean, default: true },
     addresses: { type: [addressSchema], default: [] },
-    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    
+    // Password reset fields (hidden by default via select: false)
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false }
   },
   { timestamps: true }
 );
@@ -44,10 +48,12 @@ userSchema.methods.matchPassword = function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
 
-// Defence in depth: the hash must never leave the server, even if a query forgets to exclude it
+// Defence in depth: sensitive hashes and tokens must never leave the server
 userSchema.set('toJSON', {
   transform: (doc, ret) => {
     delete ret.password;
+    delete ret.passwordResetToken;
+    delete ret.passwordResetExpires;
     return ret;
   }
 });

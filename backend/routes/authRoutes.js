@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const router = express.Router();
 const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '30d' });
@@ -138,6 +140,181 @@ router.get('/me', protect, async (req, res) => {
 
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
+});
+
+/**
+ * POST /api/auth/forgot-password
+ * Send a password-reset link to the registered email.
+ */
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({
+        message: 'Please enter your email address.'
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Always use the same public response so callers cannot easily
+    // discover whether an email address has an account.
+    const successMessage =
+      'If an account exists for that email, a password-reset link will be sent.';
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+      isActive: true
+    });
+
+    if (!user) {
+      return res.json({ message: successMessage });
+    }
+
+    // Create a cryptographically secure, single-use token.
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Store only the SHA-256 hash in MongoDB.
+    user.passwordResetToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    if (!frontendUrl) {
+      // Do not leave a usable token in the database if email
+      // delivery cannot be configured.
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
+
+      return res.status(503).json({
+        message: 'Password reset email is not configured.'
+      });
+    }
+
+    const resetUrl =
+      `${frontendUrl.replace(/\/$/, '')}/reset-password/${resetToken}`;
+
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      });
+
+      await transporter.sendMail({
+        from: process.env.MAIL_FROM || process.env.SMTP_USER,
+        to: user.email,
+        subject: 'Reset your Exotic Grocery Store password',
+        text:
+          `We received a request to reset your password.\n\n` +
+          `Open this link within 15 minutes:\n${resetUrl}\n\n` +
+          `If you did not request this, you can ignore this email.`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto">
+            <h2>Reset your password</h2>
+            <p>We received a request to reset your Exotic Grocery Store password.</p>
+            <p>
+              <a href="${resetUrl}"
+                 style="display:inline-block;padding:12px 20px;
+                        background:#22543d;color:white;
+                        text-decoration:none;border-radius:6px">
+                Reset Password
+              </a>
+            </p>
+            <p>This link expires in 15 minutes and can only be used once.</p>
+            <p>If you did not request this, ignore this email.</p>
+          </div>
+        `
+      });
+    } catch (emailError) {
+      // Invalidate the token if sending the email fails.
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
+
+      console.error('Password-reset email delivery failed.');
+      return res.status(503).json({
+        message: 'Unable to send the reset email. Please try again later.'
+      });
+    }
+
+    return res.json({ message: successMessage });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+/**
+ * POST /api/auth/reset-password/:token
+ * Validate the reset token and save a new password.
+ */
+router.post('/reset-password/:token', async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+      return res.status(400).json({
+        message: 'Invalid or expired password-reset link.'
+      });
+    }
+
+    if (
+      typeof password !== 'string' ||
+      password.length < 8 ||
+      password.length > 128
+    ) {
+      return res.status(400).json({
+        message: 'Password must be between 8 and 128 characters.'
+      });
+    }
+
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: tokenHash,
+      passwordResetExpires: { $gt: new Date() },
+      isActive: true
+    }).select('+passwordResetToken +passwordResetExpires');
+
+    if (!user) {
+      return res.status(400).json({
+        message: 'Invalid or expired password-reset link.'
+      });
+    }
+
+    // User.save() invokes the existing User model's bcrypt
+    // password-hashing middleware.
+    user.password = password;
+
+    // A reset token must never be reusable.
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save();
+
+    return res.json({
+      message: 'Password reset successfully. Please log in with your new password.'
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;

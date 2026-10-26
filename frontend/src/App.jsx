@@ -79,6 +79,9 @@ import PaymentCancel from './pages/PaymentCancel';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
 function MainApp() {
   return (
     <div className="app-root">
@@ -161,7 +164,15 @@ function MainApp() {
               <Login />
             }
           />
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
 
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
+        />
           {/* =========================
               INFORMATION ROUTES
           ========================== */}
