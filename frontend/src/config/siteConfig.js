@@ -21,13 +21,13 @@ export const CUSTOMER_SERVICE_LINKS = [
 export const CONTACT_INFO = {
   phone: '+94 77 123 4567',
   phoneHref: 'tel:+94771234567',
-  email: 'info@exoticmarket.com',
+  email: 'exoticmarket@gmail.com',
   address: '123 Main Street, Colombo, Sri Lanka'
 };
 
 export const SHIPPING_INFO = {
-  flatRate: 4.9,
-  freeAbove: 49,
+  flatRate: 1.5,
+  freeAbove: 15,
   deliveryTime: 'Estimated delivery: 1 - 3 business days.'
 };
 

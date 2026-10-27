@@ -7,7 +7,7 @@ const toNum = (v) => {
   return Number.isFinite(n) && n >= 0 ? n : null;
 };
 
-const RATING_OPTIONS = [4, 3, 2];
+const RATING_OPTIONS = [5, 4, 3, 2, 1];
 
 // Filter panel shared by the desktop sidebar and the mobile drawer.
 // filters: { min, max, rating, brands, inStock } ; onChange(patch) updates the URL.

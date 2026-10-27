@@ -17,6 +17,7 @@ const SORT_OPTIONS = [
   { value: 'price-desc', label: 'Price: High to Low' },
   { value: 'rating', label: 'Top Rated' },
   { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
   { value: 'name', label: 'Name: A to Z' }
 ];
 

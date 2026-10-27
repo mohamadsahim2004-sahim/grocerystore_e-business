@@ -1,0 +1,71 @@
+Grocery Store Project — Code Change Reference
+
+If the lecturer says…
+
+Change this
+
+Change the colours/theme
+
+frontend/src/index.css → :root block (--header-green, --forest-900, --warm-500, etc.)
+
+Rename or add a menu link
+
+src/config/siteConfig.js → NAV_LINKS
+
+Change contact info/footer
+
+siteConfig.js → CONTACT_INFO; layout in Footer.jsx
+
+Change the logo
+
+src/assets/logo/ and BrandLogo.jsx
+
+Change free-shipping amount or fee
+
+Update both siteConfig.js → SHIPPING_INFO (display) and backend/config/shipping.js → FREE_SHIPPING_ABOVE (actual calculation)
+
+Add a sort option
+
+ProductsPage.jsx → SORTERS and the options list near lines 16–26
+
+Add a filter
+
+ShopFilters.jsx → filter UI; ProductsPage.jsx → filtered block for filter logic
+
+Change button or label text
+
+Search the text in the source code; also check src/i18n/translations.js
+
+Add a field to products (e.g., type or weight)
+
+1. backend/models/Product.js 2. Product create/update routes 3. AdminProductForm.jsx 4. ProductCard.jsx or ProductDetailPage.jsx
+
+Add an order status
+
+backend/models/Order.js, AdminOrderDetail.jsx, and lib/orderFormat.js
+
+Add a user role
+
+ROLES in backend/routes/adminUserRoutes.js, the User model, and AdminUser.jsx
+
+Change a password or form rule
+
+Backend validation in authRoutes.js and the form in Register.jsx
+
+Change the quantity limit in the cart
+
+QuantityControl.jsx and updateQuantity in StoreContext.jsx
+
+Important reminders
+
+Check the existing code before editing because file paths and line numbers may change.
+
+For shipping changes, update both the displayed settings and the backend calculation.
+
+For new product fields, verify that the field is saved, updated, validated, and displayed correctly.
+
+For new order statuses or user roles, check both backend rules and frontend UI.
+
+After changes, test the affected feature and run the project to check for errors.
+
+Note: File paths and identifiers above are based on the project's current reference notes. Verify them against the actual source code before making changes.
