@@ -39,7 +39,7 @@ inject('models/DeliveryRate.js', {
   updateOne: async () => ({ modifiedCount: 0 })
 });
 const PID = 'a'.repeat(24);
-const products = new Map([[PID, { _id: PID, name: 'Mango Chutney', image: '', unit: 'jar', price: 10, stock: 10, isActive: true }]]);
+const products = new Map([[PID, { _id: PID, name: 'Mango Chutney', image: '', unit: 'jar', price: 5, stock: 10, isActive: true }]]);
 inject('models/Product.js', {
   find: async (q) => q._id.$in.map((id) => products.get(String(id))).filter(Boolean),
   updateOne: async (f, u) => {
@@ -132,15 +132,16 @@ async function startPayment(orderId, user = 'alice') {
 }
 const stored = (id) => orders.find((o) => o._id === id);
 
-// items 2 x 10 + delivery 3.5 = 23.5 USD -> 7050.00 LKR at the test rate of 300
-const EXPECTED_LKR = '7050.00';
+// items 2 x 5 = 10 USD stays under the free-shipping threshold (config/shipping.js), so delivery 3.5 applies:
+// 13.5 USD -> 4050.00 LKR at the test rate of 300
+const EXPECTED_LKR = '4050.00';
 
 test('Cash on Delivery order is still created unpaid and untouched by PayHere', async () => {
   const stockBefore = products.get(PID).stock;
   const order = await placeOrder('COD');
   assert.equal(order.paymentMethod, 'COD');
   assert.equal(order.isPaid, false);
-  assert.equal(order.totalPrice, 23.5);
+  assert.equal(order.totalPrice, 13.5);
   assert.equal(products.get(PID).stock, stockBefore - 2);
   const r = await call('POST', '/payments/payhere/params', { orderId: order._id }, auth('alice'));
   assert.equal(r.status, 400);
@@ -149,7 +150,7 @@ test('Cash on Delivery order is still created unpaid and untouched by PayHere', 
 
 test('PayHere order: server-side totals, unpaid until a verified notification', async () => {
   const order = await placeOrder('CARD', 'alice', { totalPrice: 1, shippingPrice: 0, isPaid: true, paymentStatus: 'Paid' });
-  assert.equal(order.totalPrice, 23.5, 'client-supplied totals are ignored');
+  assert.equal(order.totalPrice, 13.5, 'client-supplied totals are ignored');
   assert.equal(order.isPaid, false, 'client cannot mark an order paid');
   assert.equal(order.paymentStatus, 'Unpaid');
   assert.equal(order.shippingAddress.province, 'Western');

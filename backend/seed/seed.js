@@ -6,9 +6,10 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const { applyDnsOverride, getMongoUri, getMongoConnectOptions } = require('../utils/dbDiagnostics');
 
 async function run() {
-  const { MONGO_URI, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME } = process.env;
+  const { ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME } = process.env;
   
   if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
     console.error('❌ Set ADMIN_EMAIL and ADMIN_PASSWORD (and optionally ADMIN_NAME) before running this script.');
@@ -20,7 +21,8 @@ async function run() {
   }
 
   try {
-    await mongoose.connect(MONGO_URI || 'mongodb://localhost:27017/exotic_store');
+    // same URI + database name as server.js, so the admin is created in the database the API actually uses
+    await mongoose.connect(getMongoUri(), getMongoConnectOptions());
     const email = ADMIN_EMAIL.trim().toLowerCase();
 
     const existing = await User.findOne({ email });

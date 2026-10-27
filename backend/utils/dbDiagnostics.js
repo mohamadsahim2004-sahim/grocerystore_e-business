@@ -16,13 +16,22 @@ function redactMongoUri(text) {
 
 // Reads MONGO_URI. There is deliberately NO silent fallback to localhost: pointing at a local database must be an
 // explicit choice (MONGO_URI=mongodb://localhost:27017/exotic_store).
+// Optional: DNS_SERVERS=8.8.8.8,1.1.1.1 makes Node use those resolvers for this process only (nothing on the machine
+// changes). Use it when the network's own DNS cannot answer the SRV lookup that mongodb+srv:// needs (EBADRESP).
+function applyDnsOverride(env = process.env) {
+  const servers = (env.DNS_SERVERS || '').split(',').map((s) => s.trim()).filter(Boolean);
+  if (servers.length) require('dns').setServers(servers);
+}
+
 function getMongoUri(env = process.env) {
-  const uri = (env.MONGO_URI || '').trim();
+  applyDnsOverride(env);
+  // MONGODB_URI is the preferred name; MONGO_URI is still accepted so existing .env files keep working.
+  const uri = (env.MONGODB_URI || env.MONGO_URI || '').trim();
   if (!uri) {
     throw new DbConfigError(
-      'MONGO_URI is not set. Add your connection string from the MongoDB Atlas dashboard to backend/.env ' +
+      'MONGODB_URI is not set. Add your connection string from the MongoDB Atlas dashboard to backend/.env ' +
         '(Atlas > Database > Connect > Drivers). For a local database set it explicitly, e.g. ' +
-        'MONGO_URI=mongodb://localhost:27017/exotic_store',
+        'MONGODB_URI=mongodb://localhost:27017/exotic_store',
       'MONGO_URI_MISSING'
     );
   }
@@ -225,4 +234,4 @@ function formatDbFailure(err, uriInfo = {}) {
   return lines.join('\n');
 }
 
-module.exports = { DbConfigError, redactMongoUri, getMongoUri, getMongoConnectOptions, parseMongoUri, classifyDbError, formatDbFailure };
+module.exports = { applyDnsOverride, DbConfigError, redactMongoUri, getMongoUri, getMongoConnectOptions, parseMongoUri, classifyDbError, formatDbFailure };

@@ -8,7 +8,6 @@ import CurrencyNotice from '../components/CurrencyNotice';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { ImageIcon, AlertIcon } from '../components/Icons';
 import useCartQuote from '../hooks/useCartQuote';
-import { formatMoney } from '../config/currency';
 import { phoneError, postalCodeError } from '../lib/addressValidation';
 import { rememberPendingOrder, submitPayHereForm } from '../lib/payhere';
 
