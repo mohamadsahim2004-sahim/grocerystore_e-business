@@ -10,7 +10,7 @@ const toNum = (v) => {
 const RATING_OPTIONS = [5, 4, 3, 2, 1];
 
 // Filter panel shared by the desktop sidebar and the mobile drawer.
-// filters: { min, max, rating, brands, inStock, discount } ; onChange(patch) updates the URL.
+// filters: { min, max, rating, brands, inStock } ; onChange(patch) updates the URL.
 export default function ShopFilters({
   categories,
   activeSlug,
@@ -19,7 +19,6 @@ export default function ShopFilters({
   filters,
   bounds,
   brandOptions,
-  discountOptions,
   hasActive,
   onChange,
   onClear,
@@ -159,35 +158,6 @@ export default function ShopFilters({
           ))}
         </ul>
       </section>
-
-      {discountOptions.some((o) => o.count > 0) && (
-        <section className="filter-group" aria-labelledby="filter-discount">
-          <h3 id="filter-discount">Discount</h3>
-          <ul className="filter-options">
-            <li>
-              <label>
-                <input type="radio" name={`discount-${groupId}`} checked={!filters.discount} onChange={() => onChange({ discount: '' })} />
-                <span>Any discount</span>
-              </label>
-            </li>
-            {discountOptions.map((o) => (
-              <li key={o.value}>
-                <label>
-                  <input
-                    type="radio"
-                    name={`discount-${groupId}`}
-                    checked={filters.discount === o.value}
-                    disabled={o.count === 0 && filters.discount !== o.value}
-                    onChange={() => onChange({ discount: o.value })}
-                  />
-                  <span>{o.label}</span>
-                  <span className="filter-count">{o.count}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       {brandOptions.length > 1 && (
         <section className="filter-group" aria-labelledby="filter-brand">

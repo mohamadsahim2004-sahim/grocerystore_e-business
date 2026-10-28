@@ -30,23 +30,6 @@ const SORTERS = {
   name: (a, b) => a.name.localeCompare(b.name)
 };
 
-// Minimum-discount choices for the sidebar filter (value = minimum % off; 1 = "any discount")
-const DISCOUNT_OPTIONS = [
-  { value: 1, label: 'On sale' },
-  { value: 10, label: '10% off or more' },
-  { value: 20, label: '20% off or more' },
-  { value: 30, label: '30% off or more' },
-  { value: 50, label: '50% off or more' }
-];
-
-// Same rule as ProductCard: a product is discounted when oldPrice is above price. Returns whole % off (0 = none).
-const discountPercent = (p) => {
-  const price = Number(p.price) || 0;
-  const oldPrice = Number(p.oldPrice) || 0;
-  if (!(oldPrice > price)) return 0;
-  return Math.max(1, Math.round(((oldPrice - price) / oldPrice) * 100));
-};
-
 const isAvailable = (p) => (typeof p.stock === 'number' ? p.stock > 0 : true);
 const numParam = (params, key) => {
   const v = parseFloat(params.get(key));
@@ -71,8 +54,7 @@ export default function ProductsPage() {
     max: numParam(searchParams, 'max'),
     rating: numParam(searchParams, 'rating') || 0,
     brands: searchParams.getAll('brand'),
-    inStock: searchParams.get('stock') === '1',
-    discount: numParam(searchParams, 'discount') || 0
+    inStock: searchParams.get('stock') === '1'
   };
   const sort = SORTERS[searchParams.get('sort')] ? searchParams.get('sort') : 'popularity';
   const requestedPage = Math.max(1, parseInt(searchParams.get('page'), 10) || 1);
@@ -152,11 +134,6 @@ export default function ProductsPage() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [inCategory]);
 
-  const discountOptions = useMemo(
-    () => DISCOUNT_OPTIONS.map((o) => ({ ...o, count: inCategory.filter((p) => discountPercent(p) >= o.value).length })),
-    [inCategory]
-  );
-
   const filtered = useMemo(() => {
     const list = inCategory.filter((p) => {
       if (query) {
@@ -168,12 +145,11 @@ export default function ProductsPage() {
       if (filters.rating && (p.rating || 0) < filters.rating) return false;
       if (filters.brands.length && !filters.brands.includes(p.brand)) return false;
       if (filters.inStock && !isAvailable(p)) return false;
-      if (filters.discount && discountPercent(p) < filters.discount) return false;
       return true;
     });
     return [...list].sort(SORTERS[sort]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inCategory, query, filters.min, filters.max, filters.rating, filters.brands.join('|'), filters.inStock, filters.discount, sort]);
+  }, [inCategory, query, filters.min, filters.max, filters.rating, filters.brands.join('|'), filters.inStock, sort]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const page = Math.min(requestedPage, pages);
@@ -189,7 +165,6 @@ export default function ProductsPage() {
   }
   if (filters.rating) chips.push({ key: 'rating', label: `${filters.rating}★ & up`, clear: () => updateParams({ rating: '' }) });
   filters.brands.forEach((b) => chips.push({ key: `brand-${b}`, label: b, clear: () => updateParams({ brand: filters.brands.filter((x) => x !== b) }) }));
-  if (filters.discount) chips.push({ key: 'discount', label: filters.discount === 1 ? 'On sale' : `${filters.discount}%+ off`, clear: () => updateParams({ discount: '' }) });
   if (filters.inStock) chips.push({ key: 'stock', label: 'In stock only', clear: () => updateParams({ stock: false }) });
   const hasActive = chips.length > 0;
 
@@ -207,7 +182,6 @@ export default function ProductsPage() {
       filters={filters}
       bounds={bounds}
       brandOptions={brandOptions}
-      discountOptions={discountOptions}
       hasActive={hasActive}
       onChange={updateParams}
       onClear={clearFilters}

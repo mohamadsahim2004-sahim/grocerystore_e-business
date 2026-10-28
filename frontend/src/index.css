@@ -5183,3 +5183,256 @@ textarea.form-control {
     justify-content: center;
   }
 }
+
+
+/* ==========================================================================
+   Discounts: header button + Discounts page
+   ========================================================================== */
+
+/* Header "Discounts" button: a warm pill so it stands out on the green bar (desktop and mobile menu) */
+.site-header .nav-link.nav-link--discount {
+  background: var(--warm-500);
+  color: var(--forest-950);
+  font-weight: 700;
+  padding: 0 16px;
+  min-height: 40px;
+  border-radius: var(--radius-pill);
+}
+
+.site-header .nav-link.nav-link--discount:hover {
+  background: #f09d45;
+  color: var(--forest-950);
+}
+
+.site-header .nav-link.nav-link--discount.active {
+  background: var(--white);
+  color: var(--warm-700);
+  box-shadow: 0 0 0 2px var(--warm-500);
+}
+
+.site-header .nav-link.nav-link--discount.active::after {
+  display: none;
+}
+
+.site-header .nav-link.nav-link--discount:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 992px) {
+  .site-header .nav-link.nav-link--discount {
+    width: auto;
+    align-self: flex-start;
+    min-height: 44px;
+    margin: 6px 0 2px 12px;
+  }
+}
+
+.discounts-hero {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 18px 22px;
+  background: var(--warm-50);
+  border: 1px solid var(--warm-100);
+  border-radius: var(--radius-lg);
+}
+
+.discounts-hero__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  background: var(--warm-100);
+  color: var(--warm-600);
+  border-radius: 50%;
+}
+
+.discounts-hero__text {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.discounts-hero__text p {
+  margin-top: 2px;
+  font-size: 15px;
+  color: var(--ink-700);
+}
+
+.discounts-hero__text .shop-count {
+  font-size: 14px;
+  color: var(--ink-500);
+}
+
+/* Sale prices stand out; the original price stays struck through (from .product-card__price-old) */
+.discounts-page .product-card__price-current {
+  color: var(--warm-600);
+}
+
+.discounts-page .product-card__price-old {
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .discounts-hero {
+    padding: 14px 16px;
+  }
+
+  .discounts-hero .sort-select {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .discounts-hero .sort-select select {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* ==========================================================================
+   Profile page
+   ========================================================================== */
+
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.profile-card .account-panel__head {
+  margin-bottom: 14px;
+}
+
+.profile-card .profile-photo {
+  margin-bottom: 0;
+}
+
+.profile-alert {
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+}
+
+.profile-alert.success-msg {
+  background: var(--green-50);
+  border: 1px solid var(--green-200);
+}
+
+.profile-alert.error-msg {
+  background: #fdeeee;
+  border: 1px solid #f3c6c6;
+}
+
+.profile-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.profile-section__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.profile-section__lead {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--ink-500);
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 0;
+}
+
+.profile-details dt {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-500);
+}
+
+.profile-details dd {
+  margin: 4px 0 0;
+  font-size: 16px;
+  color: var(--ink-900);
+  overflow-wrap: anywhere;
+}
+
+.field-hint {
+  font-size: 13px;
+  color: var(--ink-500);
+}
+
+.field-required {
+  color: var(--danger);
+}
+
+.profile-form__actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profile-load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #fdeeee;
+  border: 1px solid #f3c6c6;
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.profile-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.profile-address__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--green-700);
+}
+
+.profile-address address {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-style: normal;
+  color: var(--ink-700);
+  overflow-wrap: anywhere;
+}
+
+.profile-address address strong {
+  color: var(--ink-900);
+}
+
+@media (max-width: 640px) {
+  .profile-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-section__head > .btn {
+    width: 100%;
+  }
+}
+

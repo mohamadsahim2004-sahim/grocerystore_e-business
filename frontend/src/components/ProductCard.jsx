@@ -35,7 +35,7 @@ export default function ProductCard({ product }) {
   const discountPercent =
     product?.offerPercent ||
     (hasDiscount
-      ? Math.round(((oldPrice - price) / oldPrice) * 100)
+      ? Math.max(1, Math.round(((oldPrice - price) / oldPrice) * 100))
       : 0);
 
   const hasStockInfo = typeof product?.stock === 'number';

@@ -3,10 +3,9 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
+const { validateProfileUpdate } = require('../utils/profileValidation');
 
 const MAX_ADDRESSES = 10;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_PATTERN = /^[+()\-\s\d]+$/;
 
 // Same rules the checkout form and POST /api/orders use for a delivery address.
 const cleanText = (value) => (typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '');
@@ -66,47 +65,41 @@ router.get('/', (req, res) => {
 // @desc    Update logged-in user's profile (name, email, phone)
 // @route   PUT /api/profile
 // @access  Private
+// Only these three fields are editable here. Role, active flag, password and every other field in the body is ignored,
+// and the user is always looked up from the verified token, so nobody can edit another account.
 router.put('/', async (req, res, next) => {
   try {
-    const { name, email, phone } = req.body;
+    const { data, errors } = validateProfileUpdate(req.body);
+    const fieldNames = Object.keys(errors);
+    if (fieldNames.length > 0) {
+      return res.status(400).json({ message: errors[fieldNames[0]], errors });
+    }
+
     const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (name !== undefined) {
-      const trimmed = String(name).trim();
-      if (trimmed.length < 2 || trimmed.length > 100) {
-        return res.status(400).json({ message: 'Name must be between 2 and 100 characters' });
-      }
-      user.name = trimmed;
-    }
-
-    if (email !== undefined) {
-      const normalized = String(email).trim().toLowerCase();
-      if (!EMAIL_PATTERN.test(normalized) || normalized.length > 254) {
-        return res.status(400).json({ message: 'Please enter a valid email address' });
-      }
-      if (normalized !== user.email) {
-        const taken = await User.findOne({ email: normalized, _id: { $ne: user._id } });
-        if (taken) {
-          return res.status(400).json({ message: 'An account with this email already exists' });
-        }
-        user.email = normalized;
+    if (data.email !== undefined && data.email !== user.email) {
+      const taken = await User.findOne({ email: data.email, _id: { $ne: user._id } });
+      if (taken) {
+        const message = 'An account with this email already exists';
+        return res.status(400).json({ message, errors: { email: message } });
       }
     }
 
-    if (phone !== undefined) {
-      const trimmed = String(phone).trim();
-      if (trimmed && (!PHONE_PATTERN.test(trimmed) || trimmed.length > 20 || trimmed.replace(/\D/g, '').length < 7)) {
-        return res.status(400).json({ message: 'Please enter a valid phone number' });
-      }
-      user.phone = trimmed;
-    }
+    if (data.name !== undefined) user.name = data.name;
+    if (data.email !== undefined) user.email = data.email;
+    if (data.phone !== undefined) user.phone = data.phone;
 
     const updated = await user.save();
     res.json({ user: updated });
   } catch (error) {
+    // Two requests racing for the same new email: the unique index decides
+    if (error && error.code === 11000) {
+      const message = 'An account with this email already exists';
+      return res.status(400).json({ message, errors: { email: message } });
+    }
     next(error);
   }
 });

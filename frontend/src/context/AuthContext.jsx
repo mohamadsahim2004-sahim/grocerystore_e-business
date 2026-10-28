@@ -213,7 +213,13 @@ export const AuthProvider = ({
 
           return data.user;
         } catch (error) {
-          throw toError(error);
+          const failure = toError(error);
+
+          // Per-field messages from the server (e.g. "email already exists") so the form can show them next to the field
+          failure.fieldErrors =
+            error?.response?.data?.errors || null;
+
+          throw failure;
         }
       },
       []

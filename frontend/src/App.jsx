@@ -69,6 +69,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import ContactPage from './pages/ContactPage';
 
 import CategoriesPage from './pages/CategoriesPage';
+import DiscountsPage from './pages/DiscountsPage';
 import AboutPage from './pages/AboutPage';
 
 import NotFoundPage from './pages/NotFoundPage';
@@ -141,6 +142,13 @@ function MainApp() {
             path="/categories"
             element={
               <CategoriesPage />
+            }
+          />
+
+          <Route
+            path="/discounts"
+            element={
+              <DiscountsPage />
             }
           />
 

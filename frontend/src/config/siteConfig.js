@@ -7,10 +7,13 @@ export const TAGLINE = 'Authentic & Global Flavors';
 export const NAV_LINKS = [
   { label: 'Home', to: '/', page: 'home' },
   { label: 'Shop', to: '/shop' },
-  { label: 'Categories', to: '/categories' },
+  { label: 'Discounts', to: '/discounts', highlight: true },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' }
 ];
+
+// Categories left the header, but the page still exists, so the footer keeps a link to it
+export const FOOTER_QUICK_LINKS = [...NAV_LINKS, { label: 'Categories', to: '/categories' }];
 
 export const CUSTOMER_SERVICE_LINKS = [
   { label: 'Help & FAQ', to: '/faq' },

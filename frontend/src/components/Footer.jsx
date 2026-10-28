@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import BrandLogo from './BrandLogo';
 import { PhoneIcon, MailIcon, PinIcon, SOCIAL_ICONS } from './Icons';
 import useStoreNav from '../hooks/useStoreNav';
-import { NAV_LINKS, CUSTOMER_SERVICE_LINKS, CONTACT_INFO, SOCIAL_LINKS, TAGLINE } from '../config/siteConfig';
+import { FOOTER_QUICK_LINKS, CUSTOMER_SERVICE_LINKS, CONTACT_INFO, SOCIAL_LINKS, TAGLINE } from '../config/siteConfig';
 
 export default function Footer() {
   const { getLinkProps } = useStoreNav();
@@ -19,7 +19,7 @@ export default function Footer() {
         <nav className="footer-col" aria-label="Quick links">
           <h3>Quick Links</h3>
           <ul>
-            {NAV_LINKS.map((link) => (
+            {FOOTER_QUICK_LINKS.map((link) => (
               <li key={link.label}>
                 <Link {...getLinkProps(link)}>{link.label}</Link>
               </li>

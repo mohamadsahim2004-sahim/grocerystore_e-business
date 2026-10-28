@@ -156,7 +156,7 @@ export default function Header() {
                 <li key={link.label}>
                   <Link
                     {...linkProps}
-                    className={`nav-link${active ? ' active' : ''}`}
+                    className={`nav-link${link.highlight ? ' nav-link--discount' : ''}${active ? ' active' : ''}`}
                     aria-current={active ? 'page' : undefined}
                     onClick={() => {
                       linkProps.onClick?.();
